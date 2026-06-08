@@ -42,10 +42,8 @@ store.setEditMode("text");
 
 ```bash
 cd /Users/fyy/Desktop/projects/canvas-teacher
-git show <本节 commit>
+git show 5a83cfa
 ```
-
-提交后会替换成真实 commit id。
 
 ## 本节改动文件
 
