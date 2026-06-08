@@ -55,10 +55,8 @@ export interface TextElementData extends BaseElementData {
 
 ```bash
 cd /Users/fyy/Desktop/projects/canvas-teacher
-git show <本节 commit>
+git show f90e21c
 ```
-
-提交后会把这里替换成实际 commit id。
 
 ## 你要改哪个文件
 
