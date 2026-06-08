@@ -67,10 +67,8 @@ ToolBarItemEnum.Text
 
 ```bash
 cd /Users/fyy/Desktop/projects/canvas-teacher
-git show <本节 commit>
+git show 5ec765c
 ```
-
-提交后会替换成真实 commit id。
 
 ## 你要改哪个文件
 
