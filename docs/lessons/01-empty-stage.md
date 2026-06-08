@@ -405,6 +405,7 @@ export function CanvasElements(_props: CanvasElementsProps) {
 ```tsx
 import Konva from 'konva';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { useStore } from '../store/StoreContext';
 import { CANVAS_BACKGROUND_COLOR, DEFAULT_STAGE_SIZE } from './canvasConfig';
 import { CanvasElements } from './CanvasElements';
@@ -475,9 +476,28 @@ export function InfiniteCanvas({
       store.setLayer(null);
       setLayer(null);
     };
-  }, [stageSize.height, stageSize.width, store]);
+  }, [store]);
 
-  const containerStyle = useMemo<React.CSSProperties>(
+  useEffect(() => {
+    const stage = stageRef.current;
+    const layer = layerRef.current;
+    if (!stage || !layer) {
+      return;
+    }
+
+    stage.width(stageSize.width);
+    stage.height(stageSize.height);
+
+    const background = layer.findOne('.canvas-background');
+    background?.setAttrs({
+      width: stageSize.width,
+      height: stageSize.height,
+    });
+
+    layer.batchDraw();
+  }, [stageSize.height, stageSize.width]);
+
+  const containerStyle = useMemo<CSSProperties>(
     () => ({
       width: stageSize.width,
       height: stageSize.height,
