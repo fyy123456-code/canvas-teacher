@@ -136,6 +136,258 @@ export const DEFAULT_STAGE_SIZE: CanvasSize = {
 
 `listening={false}` 表示背景层不参与鼠标事件。背景只是视觉底色，不应该抢走元素点击、框选、拖拽等交互事件。
 
+## 逐文件手写步骤
+
+下面这部分是你在 `canvas-student` 中手写 Lesson 01 时的操作顺序。每一步只改一个文件，按顺序写。
+
+### 第 1 步：创建 `src/canvas/types.ts`
+
+这个文件负责放画布模块的基础类型。
+
+写入：
+
+```ts
+export interface CanvasSize {
+  width: number;
+  height: number;
+}
+
+export type CanvasLayerId = 'backgroundLayer' | 'sceneLayer' | 'interactionLayer';
+```
+
+为什么先写它：后面的配置文件和组件都会用到 `CanvasSize`、`CanvasLayerId`。先把类型写好，可以让后面的文件有明确约束。
+
+写完后检查：确认 `CanvasLayerId` 里正好有三层：`backgroundLayer`、`sceneLayer`、`interactionLayer`。
+
+### 第 2 步：创建 `src/canvas/canvasConfig.ts`
+
+这个文件负责放画布默认配置。
+
+写入：
+
+```ts
+import type { CanvasLayerId, CanvasSize } from './types';
+
+export const DEFAULT_STAGE_SIZE: CanvasSize = {
+  width: 960,
+  height: 540,
+};
+
+export const CANVAS_BACKGROUND_COLOR = '#ffffff';
+
+export const CANVAS_LAYER_IDS: Record<CanvasLayerId, CanvasLayerId> = {
+  backgroundLayer: 'backgroundLayer',
+  sceneLayer: 'sceneLayer',
+  interactionLayer: 'interactionLayer',
+};
+```
+
+为什么这样写：尺寸、背景色、图层 id 都属于“画布配置”，集中放在一个文件里，后面修改画布默认尺寸或查找图层时不用到处找。
+
+写完后检查：确认 `Record<CanvasLayerId, CanvasLayerId>` 没有类型报错。如果你漏掉某一层，TypeScript 会提示。
+
+### 第 3 步：创建 `src/canvas/CanvasStage.tsx`
+
+这个文件负责真正渲染 Konva 的 `Stage` 和 `Layer`。
+
+写入：
+
+```tsx
+import { Layer, Rect, Stage } from 'react-konva';
+import {
+  CANVAS_BACKGROUND_COLOR,
+  CANVAS_LAYER_IDS,
+  DEFAULT_STAGE_SIZE,
+} from './canvasConfig';
+import type { CanvasSize } from './types';
+
+export interface CanvasStageProps {
+  size?: CanvasSize;
+}
+
+export function CanvasStage({ size = DEFAULT_STAGE_SIZE }: CanvasStageProps) {
+  return (
+    <div className="canvas-stage-shell">
+      <Stage width={size.width} height={size.height} className="canvas-stage">
+        <Layer id={CANVAS_LAYER_IDS.backgroundLayer} listening={false}>
+          <Rect
+            x={0}
+            y={0}
+            width={size.width}
+            height={size.height}
+            fill={CANVAS_BACKGROUND_COLOR}
+          />
+        </Layer>
+        <Layer id={CANVAS_LAYER_IDS.sceneLayer} />
+        <Layer id={CANVAS_LAYER_IDS.interactionLayer} />
+      </Stage>
+    </div>
+  );
+}
+```
+
+为什么这样写：
+
+- `Stage` 是画布根节点。
+- `backgroundLayer` 放背景矩形。
+- `sceneLayer` 以后放图片、文本、图形。
+- `interactionLayer` 以后放选中框、Transformer、框选矩形。
+- `listening={false}` 让背景层不参与鼠标事件。
+
+写完后检查：确认 `Layer`、`Rect`、`Stage` 都是从 `react-konva` 导入，不是从 `konva` 导入。
+
+### 第 4 步：创建 `src/canvas/CanvasWorkspace.tsx`
+
+这个文件负责画布工作区外壳。它不直接写 Konva 节点，只组织页面结构。
+
+写入：
+
+```tsx
+import { CanvasStage } from './CanvasStage';
+import { DEFAULT_STAGE_SIZE } from './canvasConfig';
+
+export function CanvasWorkspace() {
+  return (
+    <main className="workspace-shell">
+      <header className="workspace-header">
+        <div>
+          <p className="lesson-label">Lesson 01</p>
+          <h1>空白 Konva Stage</h1>
+        </div>
+        <div className="stage-meta">
+          {DEFAULT_STAGE_SIZE.width} x {DEFAULT_STAGE_SIZE.height}
+        </div>
+      </header>
+
+      <section className="workspace-body" aria-label="Canvas workspace">
+        <CanvasStage size={DEFAULT_STAGE_SIZE} />
+      </section>
+    </main>
+  );
+}
+```
+
+为什么这样写：`CanvasWorkspace` 是后续工具栏、素材栏、状态栏、快捷键监听的入口。`CanvasStage` 专心负责画布，不掺杂页面 UI。
+
+写完后检查：确认页面标题是 `Lesson 01`，尺寸展示来自 `DEFAULT_STAGE_SIZE`，不是手写死的普通文本。
+
+### 第 5 步：创建 `src/canvas/index.ts`
+
+这个文件负责统一导出 canvas 模块。
+
+写入：
+
+```ts
+export { CanvasWorkspace } from './CanvasWorkspace';
+export { CanvasStage } from './CanvasStage';
+export { DEFAULT_STAGE_SIZE } from './canvasConfig';
+export type { CanvasLayerId, CanvasSize } from './types';
+```
+
+为什么这样写：外部使用画布模块时可以从 `./canvas` 导入，不需要知道内部文件结构。
+
+写完后检查：确认 `App.tsx` 后面可以写 `import { CanvasWorkspace } from './canvas';`。
+
+### 第 6 步：修改 `src/App.tsx`
+
+这个文件只负责接入画布工作区。
+
+把原来的 Lesson 00 页面替换为：
+
+```tsx
+import { CanvasWorkspace } from './canvas';
+
+export function App() {
+  return <CanvasWorkspace />;
+}
+```
+
+为什么这样写：`App` 保持很薄。后续功能复杂起来时，`App` 不负责画布细节，只负责选择渲染哪个页面或哪个工作区。
+
+写完后检查：确认 `App.tsx` 里已经没有 Lesson 00 的说明页 JSX。
+
+### 第 7 步：修改 `src/styles/index.scss`
+
+这个文件负责把 Lesson 00 的说明页样式改成编辑器工作区样式。
+
+保留基础全局样式：
+
+```scss
+:root {
+  color: #1f2937;
+  background: #eef2f7;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+```
+
+新增工作区布局：
+
+```scss
+.workspace-shell {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 100vh;
+  background: #eef2f7;
+}
+
+.workspace-header {
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #d7dde8;
+  background: #ffffff;
+  padding: 16px 24px;
+}
+
+.workspace-body {
+  display: grid;
+  min-height: 0;
+  place-items: center;
+  overflow: auto;
+  padding: 40px;
+}
+```
+
+新增画布外观：
+
+```scss
+.canvas-stage-shell {
+  flex: none;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 18px 45px rgb(31 41 55 / 12%);
+  overflow: hidden;
+}
+
+.canvas-stage {
+  display: block;
+}
+```
+
+为什么这样写：外层负责让画布居中和可滚动，`Stage` 自己负责内部坐标系尺寸。
+
+写完后检查：确认页面上能看到一个居中的白色 960 x 540 画布。
+
+### 第 8 步：运行检查
+
+运行：
+
+```bash
+pnpm typecheck
+pnpm build
+```
+
+为什么最后检查：Lesson 01 涉及新增模块、导入导出、React-Konva 组件和 SCSS，类型检查和构建可以同时覆盖这些问题。
+
+写完后检查：两条命令都通过，浏览器页面能看到 `Lesson 01` 和空白画布。
+
 ## 学生手写任务
 
 在 `/Users/fyy/Desktop/projects/canvas-student` 中手写同样的模块结构：

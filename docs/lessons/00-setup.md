@@ -83,6 +83,280 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 - `mobx`、`mobx-react-lite`：后续用于管理画布元素、选中状态、缩放状态等。
 - `sass`：让项目可以写 SCSS 样式。
 
+## 逐文件手写步骤
+
+下面这部分是你在 `canvas-student` 中手写 Lesson 00 时的操作顺序。每一步只改一个文件，按顺序写。
+
+### 第 1 步：创建 `.gitignore`
+
+这个文件负责告诉 Git 哪些文件不需要提交。
+
+写入：
+
+```gitignore
+node_modules/
+dist/
+.DS_Store
+*.local
+*.tsbuildinfo
+```
+
+为什么先写它：后面安装依赖和构建时会生成 `node_modules/`、`dist/`，先忽略可以避免误提交。
+
+写完后检查：确认这 5 行都存在。
+
+### 第 2 步：创建 `package.json`
+
+这个文件负责声明项目名称、脚本和依赖。
+
+写入：
+
+```json
+{
+  "name": "canvas-student",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "pnpm typecheck && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json"
+  },
+  "dependencies": {
+    "konva": "^9.3.18",
+    "mobx": "^6.13.7",
+    "mobx-react-lite": "^4.1.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-konva": "^18.2.10"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "sass": "^1.83.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7"
+  }
+}
+```
+
+为什么这样写：`scripts` 定义开发、类型检查、构建入口；依赖提前包含后续画布要用的 Konva、React-Konva、MobX。
+
+写完后检查：确认 `typecheck` 脚本里有两个配置文件：`tsconfig.json` 和 `tsconfig.node.json`。
+
+### 第 3 步：创建 `index.html`
+
+这个文件是 Vite 应用的 HTML 入口。
+
+写入：
+
+```html
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Canvas Student</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+```
+
+为什么这样写：`#root` 是 React 的挂载点，`/src/main.tsx` 是应用入口。
+
+写完后检查：确认 `id="root"` 和 `/src/main.tsx` 都没有拼错。
+
+### 第 4 步：创建 `vite.config.ts`
+
+这个文件负责 Vite 配置。
+
+写入：
+
+```ts
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+});
+```
+
+为什么这样写：React 项目需要 `@vitejs/plugin-react` 处理 JSX 和 React Refresh。
+
+写完后检查：确认导入路径是 `@vitejs/plugin-react`。
+
+### 第 5 步：创建 `tsconfig.json`
+
+这个文件负责浏览器端 TypeScript 配置。
+
+写入：
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["DOM", "DOM.Iterable", "ES2020"],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx"
+  },
+  "include": ["src"]
+}
+```
+
+为什么这样写：`strict` 能让错误尽早暴露；`jsx: react-jsx` 让 TypeScript 支持 React JSX。
+
+写完后检查：确认 `include` 指向 `src`。
+
+### 第 6 步：创建 `tsconfig.node.json`
+
+这个文件负责检查 `vite.config.ts`。
+
+写入：
+
+```json
+{
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "noEmit": true
+  },
+  "include": ["vite.config.ts"]
+}
+```
+
+为什么这样写：应用代码和 Vite 配置运行环境不同，所以分开检查更清晰。
+
+写完后检查：确认 `include` 是 `vite.config.ts`。
+
+### 第 7 步：创建 `src/main.tsx`
+
+这个文件负责把 React 应用挂载到 `#root`。
+
+写入：
+
+```tsx
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { App } from './App';
+import './styles/index.scss';
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+);
+```
+
+为什么这样写：`main.tsx` 是 React 应用的真正入口，全局样式也从这里引入。
+
+写完后检查：确认 `./App` 和 `./styles/index.scss` 路径正确。
+
+### 第 8 步：创建 `src/App.tsx`
+
+这个文件暂时作为应用壳。
+
+写入：
+
+```tsx
+export function App() {
+  return (
+    <main className="app-shell">
+      <section className="intro-panel">
+        <p className="lesson-label">Lesson 00</p>
+        <h1>Canvas Student</h1>
+        <p className="intro-text">
+          这是你的手写练习项目。当前小节只完成 React、TypeScript、Vite、Konva、MobX 和 SCSS
+          的基础工程环境。
+        </p>
+        <div className="next-step">
+          下一节会渲染第一个空白 Konva Stage，开始真正进入画布坐标系。
+        </div>
+      </section>
+    </main>
+  );
+}
+```
+
+为什么这样写：当前还没有画布功能，先确认 React 页面能正常显示。
+
+写完后检查：确认组件名是 `App`，并且用了具名导出 `export function App()`。
+
+### 第 9 步：创建 `src/styles/index.scss`
+
+这个文件负责全局样式。
+
+可以先写最小样式：
+
+```scss
+:root {
+  color: #1f2937;
+  background: #f4f7fb;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-width: 320px;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+}
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+}
+```
+
+为什么这样写：Lesson 00 的样式只服务于项目壳，Lesson 01 会替换成画布工作区布局。
+
+写完后检查：确认页面没有明显样式错乱。
+
+### 第 10 步：安装并验证
+
+运行：
+
+```bash
+pnpm install
+pnpm typecheck
+pnpm build
+```
+
+为什么最后运行：此时配置、入口、样式都已经存在，验证结果更有意义。
+
+写完后检查：三条命令都成功后，Lesson 00 才算完成。
+
 ## 学生手写任务
 
 在你的项目 `/Users/fyy/Desktop/projects/canvas-student` 中手写同样的结构。
