@@ -11,6 +11,18 @@ export enum ElementStatus {
 
 export type ElementType = (typeof ElementType)[keyof typeof ElementType];
 
+export type EditMode = 'select' | 'viewport-drag' | 'text';
+
+export enum ToolBarItemEnum {
+  Select = 'Select',
+  Hand = 'Hand',
+  Text = 'Text',
+}
+
+export interface ToolBarItem {
+  toolName: ToolBarItemEnum;
+}
+
 export interface BaseElementData {
   id: string;
   file_name: string;
@@ -50,6 +62,13 @@ export class WorkSpaceStore {
   width: number;
   height: number;
   elements: CanvasElement[];
+  editMode: EditMode = 'select';
+  toolbarList: ToolBarItem[] = [
+    { toolName: ToolBarItemEnum.Select },
+    { toolName: ToolBarItemEnum.Hand },
+    { toolName: ToolBarItemEnum.Text },
+  ];
+  toolbarWrapperClass = '';
   stage: Konva.Stage | null = null;
   layer: Konva.Layer | null = null;
 
@@ -70,6 +89,10 @@ export class WorkSpaceStore {
 
   setLayer(layer: Konva.Layer | null) {
     this.layer = layer;
+  }
+
+  setEditMode(mode: EditMode) {
+    this.editMode = mode;
   }
 }
 
