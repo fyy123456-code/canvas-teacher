@@ -65,6 +65,21 @@ docs/lessons/
 - MobX
 - SCSS
 
+## 架构对齐硬约束
+
+`canvas-teacher` 的画布搭建和后续功能实现必须和 `ai-design-canvas` 保持一致。
+
+这不是只保持技术栈一致，而是要求核心实现方式一致：
+
+- React 负责组件树、容器 DOM 和生命周期。
+- Konva 节点使用命令式 API 创建和管理，例如 `new Konva.Stage()`、`new Konva.Layer()`、`new Konva.Image()`。
+- 不使用 `react-konva` 的声明式 `<Stage>`、`<Layer>`、`<Image>` 作为核心画布实现方式。
+- 工作区结构参考 `workSpace/index.tsx`、`workSpace/InfiniteCanvas.tsx`、`workSpace/CanvasElements.tsx`。
+- 状态传递参考 `store/StoreContext.tsx` 和 `store/workSpaceStore.ts`。
+- 后续每个功能在实现前都要先查看 `ai-design-canvas` 中的对应模块，再拆成适合教学的小步骤。
+
+如果为了教学简化某个功能，只能减少业务分支和后端依赖，不能更换核心架构路线。
+
 第一阶段不包含 Vue 包装层、后端 API、AI 工具、远程素材库、会员权益判断、服务端批注同步。
 
 ## 第一阶段范围

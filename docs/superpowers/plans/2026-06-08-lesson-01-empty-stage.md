@@ -4,18 +4,22 @@
 
 **Goal:** 建立可扩展的画布模块封装，并渲染第一个空白 Konva Stage。
 
-**Architecture:** `App` 只负责进入编辑器页面；`CanvasWorkspace` 负责工作区布局；`CanvasStage` 负责 Konva Stage 和 Layer 分层。虽然本节不渲染元素，但会预留 `backgroundLayer`、`sceneLayer`、`interactionLayer` 三层，后续图片、文本、选择框、Transformer 都能接入到明确位置。
+**Architecture:** `App` 只负责进入编辑器页面；`CanvasWorkspace` 负责工作区布局和 StoreProvider；`InfiniteCanvas` 使用 `new Konva.Stage()`、`new Konva.Layer()` 命令式创建 Stage 和 Layer；`CanvasElements` 后续负责把 store 元素渲染成 Konva 节点。本节不渲染真实元素，只建立和 `ai-design-canvas` 一致的底层挂载方式。
 
-**Tech Stack:** React、TypeScript、Vite、Konva、React-Konva、SCSS。
+**Tech Stack:** React、TypeScript、Vite、Konva、MobX、SCSS。
 
 ---
 
 ## 文件结构
 
-- Create: `src/canvas/types.ts`，定义画布尺寸和图层 id 类型。
+- Create: `src/store/workspaceStore.ts`，创建最小 workspace store。
+- Create: `src/store/StoreContext.tsx`，提供 StoreProvider 和 useStore。
+- Create: `src/store/index.ts`，统一导出 store 模块。
+- Create: `src/canvas/types.ts`，定义画布尺寸类型。
 - Create: `src/canvas/canvasConfig.ts`，保存默认画布尺寸和背景色。
-- Create: `src/canvas/CanvasStage.tsx`，封装 Konva Stage 和三层 Layer。
-- Create: `src/canvas/CanvasWorkspace.tsx`，封装画布工作区外壳。
+- Create: `src/canvas/InfiniteCanvas.tsx`，命令式创建 Konva Stage 和 Layer。
+- Create: `src/canvas/CanvasElements.tsx`，预留元素渲染入口。
+- Create: `src/canvas/CanvasWorkspace.tsx`，封装画布工作区外壳和 StoreProvider。
 - Create: `src/canvas/index.ts`，统一导出 canvas 模块。
 - Modify: `src/App.tsx`，从说明页切换为画布工作区。
 - Modify: `src/styles/index.scss`，增加编辑器布局和空白 Stage 样式。
@@ -26,7 +30,11 @@
 **Files:**
 - Create: `src/canvas/types.ts`
 - Create: `src/canvas/canvasConfig.ts`
-- Create: `src/canvas/CanvasStage.tsx`
+- Create: `src/store/workspaceStore.ts`
+- Create: `src/store/StoreContext.tsx`
+- Create: `src/store/index.ts`
+- Create: `src/canvas/InfiniteCanvas.tsx`
+- Create: `src/canvas/CanvasElements.tsx`
 - Create: `src/canvas/CanvasWorkspace.tsx`
 - Create: `src/canvas/index.ts`
 - Modify: `src/App.tsx`
@@ -36,13 +44,13 @@
 
 创建 `CanvasSize`、`CanvasLayerId` 类型，创建默认 Stage 配置。
 
-- [ ] **Step 2: 封装 `CanvasStage`**
+- [ ] **Step 2: 封装 `InfiniteCanvas`**
 
-使用 `react-konva` 渲染 `Stage` 和三层 `Layer`。本节不在 Layer 中放任何图形。
+使用 `new Konva.Stage()` 和 `new Konva.Layer()` 命令式创建 Stage 和 Layer。本节只添加一个背景 Rect，不渲染真实业务元素。
 
 - [ ] **Step 3: 封装 `CanvasWorkspace`**
 
-创建工作区外壳，负责标题、画布居中区域和后续工具栏接入位置。
+创建工作区外壳，负责标题、StoreProvider、画布居中区域和后续工具栏接入位置。
 
 - [ ] **Step 4: 修改 `App`**
 

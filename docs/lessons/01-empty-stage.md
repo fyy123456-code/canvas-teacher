@@ -1,148 +1,342 @@
-# Lesson 01：渲染第一个空白 Konva Stage
+# Lesson 01：按 ai-design-canvas 方式渲染空白 Konva Stage
 
 ## 本节目标
 
-本节只做一件事：渲染一个空白的 `Konva Stage`。
+本节只做一件事：用和 `ai-design-canvas` 一致的方式渲染一个空白 `Konva Stage`。
 
-但是我们不会把 `Stage` 直接写在 `App.tsx` 里。本节会先建立一个可扩展的画布模块边界，为后面的图片、文本、选中、拖拽、缩放、框选、Transformer 做准备。
+这里的“一致”不是只用同一个技术栈，而是底层架构一致：React 只负责 DOM 容器和生命周期，Konva 节点使用命令式 API 创建和管理。
+
+本节不做图片、文本、拖拽、缩放、选中、Transformer，只搭好后续功能必须依赖的画布骨架。
 
 ## 本节知识点
 
 1. `Stage` 是 Konva 的画布根容器。
 2. `Layer` 是 `Stage` 下的绘制层。
-3. `react-konva` 让我们可以用 React 组件写 Konva 节点。
-4. 画布工程需要尽早拆分“页面壳”和“画布内核”。
-5. 图层分层可以降低后续功能互相干扰的概率。
+3. `ai-design-canvas` 使用 `new Konva.Stage()`、`new Konva.Layer()` 命令式创建画布。
+4. React 在这里负责 `ref`、生命周期和组件边界，不直接声明 `<Stage>`、`<Layer>`。
+5. `StoreProvider`、`useStore`、`createWorkSpaceStore` 是后续状态流的基础。
 
-## 改动文件
+## 必须遵守的架构约束
 
-- `src/canvas/types.ts`：定义画布尺寸和图层 id 类型。
-- `src/canvas/canvasConfig.ts`：保存默认画布尺寸、背景色和图层 id。
-- `src/canvas/CanvasStage.tsx`：封装 `Stage` 和三层 `Layer`。
-- `src/canvas/CanvasWorkspace.tsx`：封装画布工作区外壳。
-- `src/canvas/index.ts`：统一导出 canvas 模块。
-- `src/App.tsx`：只渲染 `CanvasWorkspace`。
-- `src/styles/index.scss`：增加编辑器布局和画布外观样式。
+后续画布功能必须参考 `ai-design-canvas` 的对应实现。
 
-## 为什么现在就要封装
-
-如果第一节直接在 `App.tsx` 里写：
+本项目不使用 `react-konva` 的声明式写法作为核心画布架构：
 
 ```tsx
-<Stage width={960} height={540}>
+<Stage>
   <Layer />
 </Stage>
 ```
 
-短期看起来最简单，但后面加入这些功能时会很快变乱：
+本项目使用和 `ai-design-canvas` 一致的命令式写法：
 
-- 图片元素渲染
-- 文本元素渲染
-- 元素选中
-- Transformer 缩放框
-- 框选矩形
-- 画布拖拽
-- 画布缩放
-- 快捷键
-- 工具栏
-- 本地保存和导出
+```ts
+const stage = new Konva.Stage({
+  container: containerRef.current,
+  width,
+  height,
+});
 
-所以本节先建立三个层次：
+const layer = new Konva.Layer();
+stage.add(layer);
+```
+
+## 改动文件
+
+- `package.json`：移除 `react-konva`，核心版本对齐 `ai-design-canvas`。
+- `src/store/workspaceStore.ts`：创建最小 workspace store。
+- `src/store/StoreContext.tsx`：创建 `StoreProvider` 和 `useStore`。
+- `src/store/index.ts`：统一导出 store 模块。
+- `src/canvas/types.ts`：定义画布尺寸类型。
+- `src/canvas/canvasConfig.ts`：保存默认画布尺寸和背景色。
+- `src/canvas/InfiniteCanvas.tsx`：命令式创建 Konva Stage、Layer、背景矩形。
+- `src/canvas/CanvasElements.tsx`：预留元素渲染入口。
+- `src/canvas/CanvasWorkspace.tsx`：封装工作区和 StoreProvider。
+- `src/canvas/index.ts`：统一导出 canvas 模块。
+- `src/App.tsx`：只渲染 `CanvasWorkspace`。
+- `src/styles/index.scss`：增加工作区和画布容器样式。
+
+## 和 ai-design-canvas 的对应关系
+
+```text
+ai-design-canvas/src/workSpace/index.tsx
+  -> canvas-teacher/src/canvas/CanvasWorkspace.tsx
+
+ai-design-canvas/src/workSpace/InfiniteCanvas.tsx
+  -> canvas-teacher/src/canvas/InfiniteCanvas.tsx
+
+ai-design-canvas/src/workSpace/CanvasElements.tsx
+  -> canvas-teacher/src/canvas/CanvasElements.tsx
+
+ai-design-canvas/src/store/workSpaceStore.ts
+  -> canvas-teacher/src/store/workspaceStore.ts
+
+ai-design-canvas/src/store/StoreContext.tsx
+  -> canvas-teacher/src/store/StoreContext.tsx
+```
+
+当前课程项目会减少业务分支、后端依赖和 AI 工具，但不会更换核心画布架构路线。
+
+## 画布结构
+
+本节完成后的结构是：
 
 ```text
 App
   CanvasWorkspace
-    CanvasStage
-      backgroundLayer
-      sceneLayer
-      interactionLayer
+    StoreProvider
+      InfiniteCanvas
+        wrapperRef
+        containerRef
+        stageRef
+        layerRef
+        interactionLayerRef
+        CanvasElements
 ```
 
-这和 `ai-design-canvas` 的思路一致：外层工作区负责组织 UI 和快捷键，画布组件负责 Stage、Layer 和交互接入点。
+### `CanvasWorkspace`
 
-## 三层 Layer 的职责
+负责创建 store，并把 store 通过 `StoreProvider` 传给子组件。
 
-### `backgroundLayer`
+它对应 `ai-design-canvas/src/workSpace/index.tsx`。
 
-背景层。当前只放一个白色 `Rect`，让画布区域有明确边界。
+### `InfiniteCanvas`
 
-后续可以放：
+负责创建和销毁 Konva 实例：
 
-- 画布背景色
-- 透明棋盘格
-- 页面边界
+- `new Konva.Stage()`
+- `new Konva.Layer()`
+- `new Konva.Rect()`
 
-### `sceneLayer`
+它对应 `ai-design-canvas/src/workSpace/InfiniteCanvas.tsx`。
 
-内容层。真正的用户元素会放在这里。
+### `CanvasElements`
 
-后续可以放：
+当前先返回 `null`，因为本节还没有元素。
 
-- 图片
-- 文本
-- 图形
-- 分组元素
-
-### `interactionLayer`
-
-交互层。它不代表真实内容，而是用于辅助编辑。
-
-后续可以放：
-
-- 框选矩形
-- hover 边框
-- Transformer
-- 标注辅助图形
+后续图片、文本、分组都会从这里开始做，和 `ai-design-canvas/src/workSpace/CanvasElements.tsx` 保持同一思路：根据 store 里的元素数据创建或更新 Konva 节点。
 
 ## 关键代码解释
 
-### `src/canvas/types.ts`
+### `src/store/workspaceStore.ts`
 
 ```ts
-export interface CanvasSize {
+export class WorkSpaceStore {
   width: number;
   height: number;
+  elements: CanvasElement[];
+  stage: Konva.Stage | null = null;
+  layer: Konva.Layer | null = null;
 }
-
-export type CanvasLayerId = 'backgroundLayer' | 'sceneLayer' | 'interactionLayer';
 ```
 
-这里先把画布尺寸和图层 id 变成明确类型。这样后面传尺寸、查找图层、更新视口时，不容易写出随意字符串。
+这一节只保存最基础的信息：
 
-### `src/canvas/canvasConfig.ts`
+- 画布宽高
+- 元素列表
+- 当前 `stage`
+- 当前主 `layer`
 
-```ts
-export const DEFAULT_STAGE_SIZE: CanvasSize = {
-  width: 960,
-  height: 540,
-};
-```
+后续选中状态、编辑模式、历史记录、视口对象都会继续加到这个 store。
 
-当前默认画布是 16:9。后面做自定义画布尺寸时，可以先从这里开始改。
-
-### `src/canvas/CanvasStage.tsx`
+### `src/store/StoreContext.tsx`
 
 ```tsx
-<Stage width={size.width} height={size.height} className="canvas-stage">
-  <Layer id={CANVAS_LAYER_IDS.backgroundLayer} listening={false}>
-    <Rect x={0} y={0} width={size.width} height={size.height} fill={CANVAS_BACKGROUND_COLOR} />
-  </Layer>
-  <Layer id={CANVAS_LAYER_IDS.sceneLayer} />
-  <Layer id={CANVAS_LAYER_IDS.interactionLayer} />
-</Stage>
+const StoreContext = createContext<WorkSpaceStore | null>(null);
+
+export function StoreProvider({ store, children }: StoreProviderProps) {
+  return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>;
+}
+
+export function useStore(): WorkSpaceStore {
+  const store = useContext(StoreContext);
+  if (!store) {
+    throw new Error('useStore must be used inside StoreProvider.');
+  }
+
+  return store;
+}
 ```
 
-这段代码完成了真正的 Konva 挂载。
+这个结构对应 `ai-design-canvas` 的 `StoreContext`。
 
-`listening={false}` 表示背景层不参与鼠标事件。背景只是视觉底色，不应该抢走元素点击、框选、拖拽等交互事件。
+后续任何组件只要调用 `useStore()`，就能拿到同一个 workspace store。
+
+### `src/canvas/InfiniteCanvas.tsx`
+
+```tsx
+const wrapperRef = useRef<HTMLDivElement>(null);
+const containerRef = useRef<HTMLDivElement>(null);
+const stageRef = useRef<Konva.Stage | null>(null);
+const layerRef = useRef<Konva.Layer | null>(null);
+const interactionLayerRef = useRef<Konva.Layer | null>(null);
+```
+
+这些 ref 对应 `ai-design-canvas` 的核心写法。
+
+- `wrapperRef`：整个画布工作区外壳。
+- `containerRef`：Konva Stage 挂载的真实 DOM 容器。
+- `stageRef`：保存 `new Konva.Stage()` 创建出来的 Stage。
+- `layerRef`：保存主内容层。
+- `interactionLayerRef`：保存后续交互辅助层。
+
+真正创建 Stage 的代码：
+
+```ts
+const stage = new Konva.Stage({
+  container: containerRef.current,
+  width: stageSize.width,
+  height: stageSize.height,
+});
+
+const layer = new Konva.Layer();
+const interactionLayer = new Konva.Layer();
+```
+
+这就是本节最重要的代码。React 不直接声明 Konva 节点，而是在 `useEffect` 中命令式创建。
 
 ## 逐文件手写步骤
 
 下面这部分是你在 `canvas-student` 中手写 Lesson 01 时的操作顺序。每一步只改一个文件，按顺序写。
 
-### 第 1 步：创建 `src/canvas/types.ts`
+### 第 1 步：修改 `package.json`
 
-这个文件负责放画布模块的基础类型。
+这个文件负责依赖版本。为了和 `ai-design-canvas` 保持一致，先移除 `react-konva`，并调整核心版本。
+
+把依赖改成：
+
+```json
+{
+  "dependencies": {
+    "konva": "^10.0.12",
+    "mobx": "^6.15.0",
+    "mobx-react-lite": "^4.1.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "sass": "^1.94.2",
+    "typescript": "~5.9.3",
+    "vite": "^7.2.4"
+  }
+}
+```
+
+为什么先改它：后面的代码会直接 `import Konva from 'konva'`，不再使用 `react-konva`。
+
+写完后检查：确认 `package.json` 中没有 `react-konva`。
+
+### 第 2 步：创建 `src/store/workspaceStore.ts`
+
+这个文件负责创建 workspace store。
+
+写入：
+
+```ts
+import Konva from 'konva';
+import { makeAutoObservable, observable } from 'mobx';
+
+export type CanvasElement = never;
+
+export interface WorkSpaceStoreConfig {
+  width?: number;
+  height?: number;
+  elements?: CanvasElement[];
+}
+
+export class WorkSpaceStore {
+  width: number;
+  height: number;
+  elements: CanvasElement[];
+  stage: Konva.Stage | null = null;
+  layer: Konva.Layer | null = null;
+
+  constructor(config: WorkSpaceStoreConfig = {}) {
+    this.width = config.width ?? window.innerWidth;
+    this.height = config.height ?? window.innerHeight;
+    this.elements = config.elements ?? [];
+
+    makeAutoObservable(this, {
+      stage: observable.ref,
+      layer: observable.ref,
+    });
+  }
+
+  setStage(stage: Konva.Stage | null) {
+    this.stage = stage;
+  }
+
+  setLayer(layer: Konva.Layer | null) {
+    this.layer = layer;
+  }
+}
+
+export function createWorkSpaceStore(config: WorkSpaceStoreConfig = {}) {
+  return new WorkSpaceStore(config);
+}
+```
+
+为什么这样写：`ai-design-canvas` 也是通过 `createWorkSpaceStore` 创建工作区状态。当前先只放 Stage、Layer 和元素列表。
+
+写完后检查：确认函数名是 `createWorkSpaceStore`，不是 `createWorkspaceStore`。这里故意贴近原项目命名。
+
+### 第 3 步：创建 `src/store/StoreContext.tsx`
+
+这个文件负责在 React 组件树中传递 store。
+
+写入：
+
+```tsx
+import { createContext, useContext } from 'react';
+import type { WorkSpaceStore } from './workspaceStore';
+
+const StoreContext = createContext<WorkSpaceStore | null>(null);
+
+export interface StoreProviderProps {
+  store: WorkSpaceStore;
+  children: React.ReactNode;
+}
+
+export function StoreProvider({ store, children }: StoreProviderProps) {
+  return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>;
+}
+
+export function useStore(): WorkSpaceStore {
+  const store = useContext(StoreContext);
+  if (!store) {
+    throw new Error('useStore must be used inside StoreProvider.');
+  }
+
+  return store;
+}
+```
+
+为什么这样写：后续 `InfiniteCanvas`、`CanvasElements`、工具栏都需要访问同一个 store。
+
+写完后检查：确认 `useStore` 没有静默返回 `null`，否则后续错误会更难定位。
+
+### 第 4 步：创建 `src/store/index.ts`
+
+这个文件负责统一导出 store 模块。
+
+写入：
+
+```ts
+export { StoreProvider, useStore } from './StoreContext';
+export { createWorkSpaceStore } from './workspaceStore';
+export type { CanvasElement, WorkSpaceStore, WorkSpaceStoreConfig } from './workspaceStore';
+```
+
+为什么这样写：外部可以从 `../store` 统一导入，不需要知道内部文件。
+
+写完后检查：确认 `StoreProvider` 和 `createWorkSpaceStore` 都能导出。
+
+### 第 5 步：创建 `src/canvas/types.ts`
+
+这个文件负责放画布模块基础类型。
 
 写入：
 
@@ -151,22 +345,20 @@ export interface CanvasSize {
   width: number;
   height: number;
 }
-
-export type CanvasLayerId = 'backgroundLayer' | 'sceneLayer' | 'interactionLayer';
 ```
 
-为什么先写它：后面的配置文件和组件都会用到 `CanvasSize`、`CanvasLayerId`。先把类型写好，可以让后面的文件有明确约束。
+为什么这样写：当前只需要尺寸类型。图层使用 ref 保存，不再用 `react-konva` 的 Layer id 类型。
 
-写完后检查：确认 `CanvasLayerId` 里正好有三层：`backgroundLayer`、`sceneLayer`、`interactionLayer`。
+写完后检查：确认没有 `CanvasLayerId`。
 
-### 第 2 步：创建 `src/canvas/canvasConfig.ts`
+### 第 6 步：创建 `src/canvas/canvasConfig.ts`
 
 这个文件负责放画布默认配置。
 
 写入：
 
 ```ts
-import type { CanvasLayerId, CanvasSize } from './types';
+import type { CanvasSize } from './types';
 
 export const DEFAULT_STAGE_SIZE: CanvasSize = {
   width: 960,
@@ -174,104 +366,192 @@ export const DEFAULT_STAGE_SIZE: CanvasSize = {
 };
 
 export const CANVAS_BACKGROUND_COLOR = '#ffffff';
-
-export const CANVAS_LAYER_IDS: Record<CanvasLayerId, CanvasLayerId> = {
-  backgroundLayer: 'backgroundLayer',
-  sceneLayer: 'sceneLayer',
-  interactionLayer: 'interactionLayer',
-};
 ```
 
-为什么这样写：尺寸、背景色、图层 id 都属于“画布配置”，集中放在一个文件里，后面修改画布默认尺寸或查找图层时不用到处找。
+为什么这样写：画布默认尺寸和背景色集中在一个位置，后续调整尺寸时不需要改组件内部。
 
-写完后检查：确认 `Record<CanvasLayerId, CanvasLayerId>` 没有类型报错。如果你漏掉某一层，TypeScript 会提示。
+写完后检查：确认尺寸是 960 x 540。
 
-### 第 3 步：创建 `src/canvas/CanvasStage.tsx`
+### 第 7 步：创建 `src/canvas/CanvasElements.tsx`
 
-这个文件负责真正渲染 Konva 的 `Stage` 和 `Layer`。
+这个文件负责后续元素渲染入口。
 
 写入：
 
 ```tsx
-import { Layer, Rect, Stage } from 'react-konva';
-import {
-  CANVAS_BACKGROUND_COLOR,
-  CANVAS_LAYER_IDS,
-  DEFAULT_STAGE_SIZE,
-} from './canvasConfig';
-import type { CanvasSize } from './types';
+import type Konva from 'konva';
+import type { CanvasElement } from '../store/workspaceStore';
 
-export interface CanvasStageProps {
-  size?: CanvasSize;
+export interface CanvasElementsProps {
+  layer: Konva.Layer | null;
+  elements: CanvasElement[];
 }
 
-export function CanvasStage({ size = DEFAULT_STAGE_SIZE }: CanvasStageProps) {
+export function CanvasElements(_props: CanvasElementsProps) {
+  return null;
+}
+```
+
+为什么现在返回 `null`：本节还没有元素。先把入口建好，下一节画矩形或图片时会从这里开始扩展。
+
+写完后检查：确认这个组件没有返回任何 DOM 节点。
+
+### 第 8 步：创建 `src/canvas/InfiniteCanvas.tsx`
+
+这个文件是本节核心，负责命令式创建 Konva Stage 和 Layer。
+
+写入：
+
+```tsx
+import Konva from 'konva';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useStore } from '../store/StoreContext';
+import { CANVAS_BACKGROUND_COLOR, DEFAULT_STAGE_SIZE } from './canvasConfig';
+import { CanvasElements } from './CanvasElements';
+import type { CanvasSize } from './types';
+
+export interface InfiniteCanvasProps {
+  width?: number;
+  height?: number;
+}
+
+export function InfiniteCanvas({
+  width = DEFAULT_STAGE_SIZE.width,
+  height = DEFAULT_STAGE_SIZE.height,
+}: InfiniteCanvasProps) {
+  const store = useStore();
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<Konva.Stage | null>(null);
+  const layerRef = useRef<Konva.Layer | null>(null);
+  const interactionLayerRef = useRef<Konva.Layer | null>(null);
+  const [layer, setLayer] = useState<Konva.Layer | null>(null);
+
+  const stageSize = useMemo<CanvasSize>(() => ({ width, height }), [width, height]);
+
+  useEffect(() => {
+    if (!containerRef.current || stageRef.current) {
+      return;
+    }
+
+    const stage = new Konva.Stage({
+      container: containerRef.current,
+      width: stageSize.width,
+      height: stageSize.height,
+    });
+
+    const layer = new Konva.Layer();
+    const interactionLayer = new Konva.Layer();
+    const background = new Konva.Rect({
+      name: 'canvas-background',
+      x: 0,
+      y: 0,
+      width: stageSize.width,
+      height: stageSize.height,
+      fill: CANVAS_BACKGROUND_COLOR,
+      listening: false,
+    });
+
+    layer.add(background);
+    stage.add(layer);
+    stage.add(interactionLayer);
+
+    stageRef.current = stage;
+    layerRef.current = layer;
+    interactionLayerRef.current = interactionLayer;
+    store.setStage(stage);
+    store.setLayer(layer);
+    setLayer(layer);
+
+    layer.draw();
+    interactionLayer.draw();
+
+    return () => {
+      stage.destroy();
+      stageRef.current = null;
+      layerRef.current = null;
+      interactionLayerRef.current = null;
+      store.setStage(null);
+      store.setLayer(null);
+      setLayer(null);
+    };
+  }, [stageSize.height, stageSize.width, store]);
+
+  const containerStyle = useMemo<React.CSSProperties>(
+    () => ({
+      width: stageSize.width,
+      height: stageSize.height,
+      position: 'relative',
+      overflow: 'hidden',
+      backgroundColor: CANVAS_BACKGROUND_COLOR,
+    }),
+    [stageSize.height, stageSize.width],
+  );
+
   return (
-    <div className="canvas-stage-shell">
-      <Stage width={size.width} height={size.height} className="canvas-stage">
-        <Layer id={CANVAS_LAYER_IDS.backgroundLayer} listening={false}>
-          <Rect
-            x={0}
-            y={0}
-            width={size.width}
-            height={size.height}
-            fill={CANVAS_BACKGROUND_COLOR}
-          />
-        </Layer>
-        <Layer id={CANVAS_LAYER_IDS.sceneLayer} />
-        <Layer id={CANVAS_LAYER_IDS.interactionLayer} />
-      </Stage>
+    <div ref={wrapperRef} className="canvas-wrapper" data-infinite-canvas-wrapper="true">
+      <div ref={containerRef} className="canvas-container" data-infinite-canvas-children="true" style={containerStyle}>
+        <CanvasElements layer={layer} elements={store.elements} />
+      </div>
     </div>
   );
 }
 ```
 
-为什么这样写：
+为什么这样写：这和 `ai-design-canvas` 的 `InfiniteCanvas` 一样，核心 Konva 节点由 `useEffect` 内的命令式代码创建。
 
-- `Stage` 是画布根节点。
-- `backgroundLayer` 放背景矩形。
-- `sceneLayer` 以后放图片、文本、图形。
-- `interactionLayer` 以后放选中框、Transformer、框选矩形。
-- `listening={false}` 让背景层不参与鼠标事件。
+写完后检查：确认文件中出现的是 `new Konva.Stage()` 和 `new Konva.Layer()`，不是 `<Stage>` 和 `<Layer>`。
 
-写完后检查：确认 `Layer`、`Rect`、`Stage` 都是从 `react-konva` 导入，不是从 `konva` 导入。
+### 第 9 步：创建 `src/canvas/CanvasWorkspace.tsx`
 
-### 第 4 步：创建 `src/canvas/CanvasWorkspace.tsx`
-
-这个文件负责画布工作区外壳。它不直接写 Konva 节点，只组织页面结构。
+这个文件负责创建 store，并提供给画布。
 
 写入：
 
 ```tsx
-import { CanvasStage } from './CanvasStage';
+import { useMemo } from 'react';
+import { StoreProvider } from '../store';
+import { createWorkSpaceStore } from '../store/workspaceStore';
+import { InfiniteCanvas } from './InfiniteCanvas';
 import { DEFAULT_STAGE_SIZE } from './canvasConfig';
 
 export function CanvasWorkspace() {
-  return (
-    <main className="workspace-shell">
-      <header className="workspace-header">
-        <div>
-          <p className="lesson-label">Lesson 01</p>
-          <h1>空白 Konva Stage</h1>
-        </div>
-        <div className="stage-meta">
-          {DEFAULT_STAGE_SIZE.width} x {DEFAULT_STAGE_SIZE.height}
-        </div>
-      </header>
+  const store = useMemo(
+    () =>
+      createWorkSpaceStore({
+        width: DEFAULT_STAGE_SIZE.width,
+        height: DEFAULT_STAGE_SIZE.height,
+      }),
+    [],
+  );
 
-      <section className="workspace-body" aria-label="Canvas workspace">
-        <CanvasStage size={DEFAULT_STAGE_SIZE} />
-      </section>
-    </main>
+  return (
+    <StoreProvider store={store}>
+      <main className="workspace-container">
+        <header className="workspace-header">
+          <div>
+            <p className="lesson-label">Lesson 01</p>
+            <h1>命令式 Konva Stage</h1>
+          </div>
+          <div className="stage-meta">
+            {DEFAULT_STAGE_SIZE.width} x {DEFAULT_STAGE_SIZE.height}
+          </div>
+        </header>
+
+        <section className="workspace-body" aria-label="Canvas workspace">
+          <InfiniteCanvas width={DEFAULT_STAGE_SIZE.width} height={DEFAULT_STAGE_SIZE.height} />
+        </section>
+      </main>
+    </StoreProvider>
   );
 }
 ```
 
-为什么这样写：`CanvasWorkspace` 是后续工具栏、素材栏、状态栏、快捷键监听的入口。`CanvasStage` 专心负责画布，不掺杂页面 UI。
+为什么这样写：`CanvasWorkspace` 对齐原项目 `workSpace/index.tsx`，它负责准备 store 和工作区 UI。
 
-写完后检查：确认页面标题是 `Lesson 01`，尺寸展示来自 `DEFAULT_STAGE_SIZE`，不是手写死的普通文本。
+写完后检查：确认 `createWorkSpaceStore` 只创建一次，所以用了 `useMemo`。
 
-### 第 5 步：创建 `src/canvas/index.ts`
+### 第 10 步：创建 `src/canvas/index.ts`
 
 这个文件负责统一导出 canvas 模块。
 
@@ -279,20 +559,20 @@ export function CanvasWorkspace() {
 
 ```ts
 export { CanvasWorkspace } from './CanvasWorkspace';
-export { CanvasStage } from './CanvasStage';
+export { InfiniteCanvas } from './InfiniteCanvas';
 export { DEFAULT_STAGE_SIZE } from './canvasConfig';
-export type { CanvasLayerId, CanvasSize } from './types';
+export type { CanvasSize } from './types';
 ```
 
-为什么这样写：外部使用画布模块时可以从 `./canvas` 导入，不需要知道内部文件结构。
+为什么这样写：`App.tsx` 可以从 `./canvas` 导入，不依赖内部文件结构。
 
-写完后检查：确认 `App.tsx` 后面可以写 `import { CanvasWorkspace } from './canvas';`。
+写完后检查：确认没有导出 `CanvasStage`。
 
-### 第 6 步：修改 `src/App.tsx`
+### 第 11 步：修改 `src/App.tsx`
 
-这个文件只负责接入画布工作区。
+这个文件只负责接入工作区。
 
-把原来的 Lesson 00 页面替换为：
+写入：
 
 ```tsx
 import { CanvasWorkspace } from './canvas';
@@ -302,47 +582,22 @@ export function App() {
 }
 ```
 
-为什么这样写：`App` 保持很薄。后续功能复杂起来时，`App` 不负责画布细节，只负责选择渲染哪个页面或哪个工作区。
+为什么这样写：`App` 保持很薄，画布复杂度不放在这里。
 
-写完后检查：确认 `App.tsx` 里已经没有 Lesson 00 的说明页 JSX。
+写完后检查：确认 `App.tsx` 没有任何 Konva 代码。
 
-### 第 7 步：修改 `src/styles/index.scss`
+### 第 12 步：修改 `src/styles/index.scss`
 
-这个文件负责把 Lesson 00 的说明页样式改成编辑器工作区样式。
+这个文件负责工作区布局和画布容器样式。
 
-保留基础全局样式：
-
-```scss
-:root {
-  color: #1f2937;
-  background: #eef2f7;
-  font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-```
-
-新增工作区布局：
+关键样式：
 
 ```scss
-.workspace-shell {
+.workspace-container {
   display: grid;
   grid-template-rows: auto 1fr;
   min-height: 100vh;
   background: #eef2f7;
-}
-
-.workspace-header {
-  display: flex;
-  min-height: 72px;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid #d7dde8;
-  background: #ffffff;
-  padding: 16px 24px;
 }
 
 .workspace-body {
@@ -352,12 +607,9 @@ export function App() {
   overflow: auto;
   padding: 40px;
 }
-```
 
-新增画布外观：
-
-```scss
-.canvas-stage-shell {
+.canvas-wrapper {
+  position: relative;
   flex: none;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
@@ -366,92 +618,91 @@ export function App() {
   overflow: hidden;
 }
 
-.canvas-stage {
-  display: block;
+.canvas-container {
+  position: relative;
 }
 ```
 
-为什么这样写：外层负责让画布居中和可滚动，`Stage` 自己负责内部坐标系尺寸。
+为什么这样写：React 外层负责布局，Konva Stage 挂载在 `.canvas-container` 中。
 
-写完后检查：确认页面上能看到一个居中的白色 960 x 540 画布。
+写完后检查：确认页面上能看到居中的白色画布区域。
 
-### 第 8 步：运行检查
+### 第 13 步：安装并验证
 
 运行：
 
 ```bash
+pnpm install
 pnpm typecheck
 pnpm build
 ```
 
-为什么最后检查：Lesson 01 涉及新增模块、导入导出、React-Konva 组件和 SCSS，类型检查和构建可以同时覆盖这些问题。
+为什么最后检查：依赖、store、context、命令式 Konva 初始化都需要通过完整验证。
 
-写完后检查：两条命令都通过，浏览器页面能看到 `Lesson 01` 和空白画布。
+写完后检查：两条验证命令都通过，浏览器页面能看到 `Lesson 01` 和空白画布。
 
 ## 学生手写任务
 
-在 `/Users/fyy/Desktop/projects/canvas-student` 中手写同样的模块结构：
+在 `/Users/fyy/Desktop/projects/canvas-student` 中按“逐文件手写步骤”完成同样的结构。
 
-```text
-src/canvas/
-  types.ts
-  canvasConfig.ts
-  CanvasStage.tsx
-  CanvasWorkspace.tsx
-  index.ts
+本节重点不是写出更多功能，而是把底层架构改成和 `ai-design-canvas` 一致。
+
+手写完成后运行：
+
+```bash
+pnpm install
+pnpm typecheck
+pnpm build
 ```
-
-然后修改：
-
-```text
-src/App.tsx
-src/styles/index.scss
-```
-
-建议手写顺序：
-
-1. 先写 `types.ts`。
-2. 再写 `canvasConfig.ts`。
-3. 写 `CanvasStage.tsx`，只关注 `Stage` 和三层 `Layer`。
-4. 写 `CanvasWorkspace.tsx`，负责页面布局。
-5. 写 `index.ts`，统一导出。
-6. 修改 `App.tsx`。
-7. 修改样式。
-8. 运行 `pnpm typecheck`。
-9. 运行 `pnpm build`。
 
 ## 常见错误
 
-### 忘记从 `react-konva` 导入组件
+### 继续使用 `react-konva`
 
-应该写：
+本课程后续必须和 `ai-design-canvas` 保持一致，所以不要再写：
 
-```ts
-import { Layer, Rect, Stage } from 'react-konva';
+```tsx
+<Stage>
+  <Layer />
+</Stage>
 ```
 
-不是从 `konva` 导入这些 React 组件。
+应该使用：
 
-### 只写 Layer，没有背景 Rect
+```ts
+new Konva.Stage(...)
+new Konva.Layer()
+```
 
-空白 Stage 如果没有背景矩形，视觉上可能看不出画布边界。背景 Rect 可以让你明确看到画布尺寸。
+### 忘记传 `container`
 
-### 所有东西都放在一个 Layer
+`new Konva.Stage()` 必须接收真实 DOM 容器：
 
-一个 Layer 也能跑，但后面会越来越难维护。真实编辑器通常会区分内容层和交互辅助层。
+```ts
+container: containerRef.current
+```
+
+如果没有 container，Konva 不知道要把 canvas 挂到哪里。
+
+### 没有在卸载时销毁 Stage
+
+必须在 `useEffect` 的 cleanup 里写：
+
+```ts
+stage.destroy();
+```
+
+否则热更新或组件卸载后可能留下旧 canvas 和事件监听。
 
 ## 小练习
 
-完成 `canvas-student` 后，尝试把 `DEFAULT_STAGE_SIZE` 改成：
+完成 `canvas-student` 后，尝试在 `InfiniteCanvas.tsx` 里临时把背景色改成：
 
 ```ts
-export const DEFAULT_STAGE_SIZE: CanvasSize = {
-  width: 800,
-  height: 800,
-};
+fill: '#f8fafc'
 ```
 
-观察页面中的画布从 16:9 变成正方形。再改回 960 x 540，并重新运行：
+观察画布背景变化。确认后再改回 `CANVAS_BACKGROUND_COLOR`，并重新运行：
 
 ```bash
 pnpm typecheck

@@ -25,7 +25,7 @@ body {
   min-height: 100vh;
 }
 
-.workspace-shell {
+.workspace-container {
   display: grid;
   grid-template-rows: auto 1fr;
   min-height: 100vh;
@@ -74,7 +74,8 @@ h1 {
   padding: 40px;
 }
 
-.canvas-stage-shell {
+.canvas-wrapper {
+  position: relative;
   flex: none;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
@@ -83,8 +84,8 @@ h1 {
   overflow: hidden;
 }
 
-.canvas-stage {
-  display: block;
+.canvas-container {
+  position: relative;
 }
 
 @media (max-width: 640px) {

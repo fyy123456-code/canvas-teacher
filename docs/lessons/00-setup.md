@@ -79,7 +79,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 - `vite`：负责开发服务器和打包。
 - `typescript`：提供类型系统。
 - `konva`：画布渲染引擎。
-- `react-konva`：让 Konva 可以用 React 组件方式写。
+- `konva`：后续使用 `new Konva.Stage()`、`new Konva.Layer()` 等命令式 API 搭建画布，和 `ai-design-canvas` 保持一致。
 - `mobx`、`mobx-react-lite`：后续用于管理画布元素、选中状态、缩放状态等。
 - `sass`：让项目可以写 SCSS 样式。
 
@@ -124,20 +124,19 @@ dist/
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json"
   },
   "dependencies": {
-    "konva": "^9.3.18",
-    "mobx": "^6.13.7",
+    "konva": "^10.0.12",
+    "mobx": "^6.15.0",
     "mobx-react-lite": "^4.1.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-konva": "^18.2.10"
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
   },
   "devDependencies": {
-    "@types/react": "^18.3.18",
-    "@types/react-dom": "^18.3.5",
-    "@vitejs/plugin-react": "^4.3.4",
-    "sass": "^1.83.0",
-    "typescript": "^5.7.2",
-    "vite": "^6.0.7"
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "sass": "^1.94.2",
+    "typescript": "~5.9.3",
+    "vite": "^7.2.4"
   }
 }
 ```
@@ -209,7 +208,7 @@ export default defineConfig({
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "module": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "Bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
@@ -234,7 +233,7 @@ export default defineConfig({
   "compilerOptions": {
     "skipLibCheck": true,
     "module": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "Bundler",
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "noEmit": true
