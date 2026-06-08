@@ -14,8 +14,7 @@ export type ElementType = (typeof ElementType)[keyof typeof ElementType];
 export type EditMode = 'select' | 'viewport-drag' | 'text';
 
 export enum ToolBarItemEnum {
-  Select = 'Select',
-  Hand = 'Hand',
+  UploadImage = 'UploadImage',
   Text = 'Text',
 }
 
@@ -64,8 +63,7 @@ export class WorkSpaceStore {
   elements: CanvasElement[];
   editMode: EditMode = 'select';
   toolbarList: ToolBarItem[] = [
-    { toolName: ToolBarItemEnum.Select },
-    { toolName: ToolBarItemEnum.Hand },
+    { toolName: ToolBarItemEnum.UploadImage },
     { toolName: ToolBarItemEnum.Text },
   ];
   toolbarWrapperClass = '';
