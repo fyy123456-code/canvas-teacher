@@ -1,7 +1,44 @@
 import Konva from 'konva';
 import { makeAutoObservable, observable } from 'mobx';
 
-export type CanvasElement = never;
+export const ElementType = {
+  TEXT: 'text',
+} as const;
+
+export enum ElementStatus {
+  SUCCESS = 'success',
+}
+
+export type ElementType = (typeof ElementType)[keyof typeof ElementType];
+
+export interface BaseElementData {
+  id: string;
+  file_name: string;
+  type: ElementType;
+  status: ElementStatus;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  zIndex?: number;
+  opacity?: number;
+}
+
+export interface TextElementData extends BaseElementData {
+  type: typeof ElementType.TEXT;
+  text: string;
+  fontSize?: number;
+  fontFamily?: string;
+  fontStyle?: 'normal' | 'italic' | 'bold' | 'bold italic';
+  fill?: string;
+  align?: 'left' | 'center' | 'right' | 'justify';
+  verticalAlign?: 'top' | 'middle' | 'bottom';
+  padding?: number;
+  lineHeight?: number;
+  letterSpacing?: number;
+}
+
+export type CanvasElement = TextElementData;
 
 export interface WorkSpaceStoreConfig {
   width?: number;
@@ -39,4 +76,3 @@ export class WorkSpaceStore {
 export function createWorkSpaceStore(config: WorkSpaceStoreConfig = {}) {
   return new WorkSpaceStore(config);
 }
-
