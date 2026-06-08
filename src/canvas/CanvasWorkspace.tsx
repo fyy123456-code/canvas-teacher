@@ -1,34 +1,44 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { StoreProvider } from '../store';
 import { createWorkSpaceStore } from '../store/workspaceStore';
 import { InfiniteCanvas } from './InfiniteCanvas';
-import { DEFAULT_STAGE_SIZE } from './canvasConfig';
+import type { CanvasSize } from './types';
+
+function getWindowSize(): CanvasSize {
+  return {
+    width: window.innerWidth,
+    height: window.innerHeight,
+  };
+}
 
 export function CanvasWorkspace() {
+  const [stageSize, setStageSize] = useState<CanvasSize>(() => getWindowSize());
+
   const store = useMemo(
     () =>
       createWorkSpaceStore({
-        width: DEFAULT_STAGE_SIZE.width,
-        height: DEFAULT_STAGE_SIZE.height,
+        width: stageSize.width,
+        height: stageSize.height,
       }),
     [],
   );
 
+  useEffect(() => {
+    const handleResize = () => {
+      setStageSize(getWindowSize());
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
   return (
     <StoreProvider store={store}>
-      <main className="workspace-container">
-        <header className="workspace-header">
-          <div>
-            <p className="lesson-label">Lesson 01</p>
-            <h1>命令式 Konva Stage</h1>
-          </div>
-          <div className="stage-meta">
-            {DEFAULT_STAGE_SIZE.width} x {DEFAULT_STAGE_SIZE.height}
-          </div>
-        </header>
-
+      <main className="workspace-container" tabIndex={2}>
         <section className="workspace-body" aria-label="Canvas workspace">
-          <InfiniteCanvas width={DEFAULT_STAGE_SIZE.width} height={DEFAULT_STAGE_SIZE.height} />
+          <InfiniteCanvas width={stageSize.width} height={stageSize.height} />
         </section>
       </main>
     </StoreProvider>
