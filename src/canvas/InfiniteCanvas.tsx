@@ -2,7 +2,7 @@ import Konva from 'konva';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useStore } from '../store/StoreContext';
-import { CANVAS_BACKGROUND_COLOR, DEFAULT_STAGE_SIZE } from './canvasConfig';
+import { CANVAS_BACKGROUND_COLOR } from './canvasConfig';
 import { CanvasElements } from './CanvasElements';
 import type { CanvasSize } from './types';
 
@@ -12,8 +12,8 @@ export interface InfiniteCanvasProps {
 }
 
 export function InfiniteCanvas({
-  width = DEFAULT_STAGE_SIZE.width,
-  height = DEFAULT_STAGE_SIZE.height,
+  width = window.innerWidth,
+  height = window.innerHeight,
 }: InfiniteCanvasProps) {
   const store = useStore();
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -94,13 +94,15 @@ export function InfiniteCanvas({
 
   const containerStyle = useMemo<CSSProperties>(
     () => ({
-      width: stageSize.width,
-      height: stageSize.height,
-      position: 'relative',
+      width: '100%',
+      height: '100%',
+      position: 'absolute',
+      top: 0,
+      left: 0,
       overflow: 'hidden',
       backgroundColor: CANVAS_BACKGROUND_COLOR,
     }),
-    [stageSize.height, stageSize.width],
+    [],
   );
 
   return (
