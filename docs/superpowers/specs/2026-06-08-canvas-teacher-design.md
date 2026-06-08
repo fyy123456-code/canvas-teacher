@@ -1,27 +1,27 @@
-# Canvas Teacher Design
+# Canvas Teacher 课程设计
 
-## Purpose
+## 目标
 
-`canvas-teacher` is a reference project for learning canvas editor engineering from the ground up. It mirrors the core technical direction of `ai-design-canvas`, but starts with a much smaller scope so each concept can be understood and hand-written in a separate student project.
+`canvas-teacher` 是一个用于从零学习画布编辑器工程能力的参考项目。它会沿用 `ai-design-canvas` 的核心技术方向，但范围会小很多，目的是让每一个画布概念都可以被单独理解，并且可以在 `canvas-student` 中手写复现。
 
-The project is not connected to `apps/skywork-web` and does not depend on a backend in the first phase.
+这个项目不连接 `apps/skywork-web`，第一阶段也不依赖后端。
 
-## Learning Method
+## 学习方式
 
-Each lesson is intentionally small. A lesson introduces one canvas concept, implements one focused reference change in `canvas-teacher`, and gives the student a matching hand-writing task for `canvas-student`.
+每一小节都会刻意保持很小。每节只介绍一个画布概念，在 `canvas-teacher` 中实现一个聚焦的参考改动，然后给出你在 `canvas-student` 中手写复现的任务。
 
-Every lesson follows this format:
+每一小节固定按这个结构进行：
 
-1. Explain what the lesson is building.
-2. Explain the canvas knowledge used in the lesson.
-3. Implement the smallest reference change in `canvas-teacher`.
-4. Commit the lesson as one Git commit.
-5. Write a short lesson note under `docs/lessons`.
-6. Give the student a hand-writing task and a small exercise.
+1. 说明这一节要做什么。
+2. 讲解这一节用到的画布知识。
+3. 在 `canvas-teacher` 中实现最小参考代码。
+4. 把这一节提交为一个 Git commit。
+5. 在 `docs/lessons` 下写一份简短课程文档。
+6. 给出 `canvas-student` 的手写任务和一个小练习。
 
-## Change Tracking
+## 变更追踪
 
-Each lesson is committed separately. The student can inspect changes with:
+每一小节都会单独提交。你可以用下面的命令查看每节改了什么：
 
 ```bash
 git log --oneline
@@ -29,25 +29,25 @@ git show --stat HEAD
 git show --patch HEAD
 ```
 
-Lesson documents are stored in:
+课程文档会放在：
 
 ```text
 docs/lessons/
 ```
 
-Each lesson document includes:
+每份课程文档包含：
 
-- Lesson goal
-- Knowledge points
-- Changed files
-- Key code explanation
-- Student hand-writing task
-- Common mistakes
-- Small exercise
+- 本节目标
+- 知识点
+- 改动文件
+- 关键代码解释
+- 学生手写任务
+- 常见错误
+- 小练习
 
-## Tech Stack
+## 技术栈
 
-The reference project uses the same core stack direction as `ai-design-canvas`:
+参考项目使用和 `ai-design-canvas` 相同方向的核心技术栈：
 
 - React
 - TypeScript
@@ -56,68 +56,68 @@ The reference project uses the same core stack direction as `ai-design-canvas`:
 - MobX
 - SCSS
 
-The first phase does not include Vue wrapping, backend APIs, AI tools, remote material libraries, membership checks, or server-side annotation sync.
+第一阶段不包含 Vue 包装层、后端 API、AI 工具、远程素材库、会员权益判断、服务端批注同步。
 
-## Phase 1 Scope
+## 第一阶段范围
 
-Phase 1 focuses on the canvas core:
+第一阶段聚焦画布核心能力：
 
-1. Create the project and install dependencies.
-2. Render an empty Konva Stage.
-3. Add a Layer.
-4. Draw a fixed shape.
-5. Read pointer coordinates.
-6. Store one element in state.
-7. Render the element from state.
-8. Drag the element and sync position back to state.
-9. Upload a local image.
-10. Render a Konva Image.
-11. Select an image.
-12. Attach a Transformer to the selected image.
-13. Scale the selected image and write size back to state.
-14. Pan the canvas.
-15. Zoom the canvas around the pointer.
-16. Box select elements.
-17. Multi-select elements.
-18. Add a text element.
-19. Edit text with a DOM overlay.
-20. Delete selected elements.
-21. Add undo and redo.
-22. Save locally.
-23. Export the canvas.
+1. 创建项目并安装依赖。
+2. 渲染一个空白 Konva Stage。
+3. 添加一个 Layer。
+4. 画一个固定图形。
+5. 读取鼠标指针坐标。
+6. 用状态保存一个元素数据。
+7. 根据状态渲染元素。
+8. 拖拽元素，并把位置同步回状态。
+9. 上传本地图片。
+10. 渲染 Konva Image。
+11. 选中图片。
+12. 给选中的图片绑定 Transformer。
+13. 缩放选中的图片，并把尺寸写回状态。
+14. 平移画布。
+15. 围绕鼠标指针缩放画布。
+16. 框选元素。
+17. 多选元素。
+18. 添加文本元素。
+19. 使用 DOM 覆盖层编辑文本。
+20. 删除选中元素。
+21. 添加撤销和重做。
+22. 本地保存。
+23. 导出画布。
 
-Large features can be split further if one lesson becomes too complex.
+如果某个功能在实现时仍然太复杂，会继续拆成更小的小节。
 
-## Phase 1 Exclusions
+## 第一阶段暂不做的内容
 
-The following features are intentionally delayed:
+下面这些功能会刻意延后：
 
-- AI background removal
-- AI inpainting
-- AI outpainting
-- AI text editing
-- Backend material library
-- Backend annotations
-- Knowledge base integration
-- Cloud project persistence
-- Vue SDK wrapper
-- Permission and membership logic
+- AI 去背景
+- AI 擦除/局部修图
+- AI 扩图
+- AI 文本编辑
+- 后端素材库
+- 后端批注
+- 知识库集成
+- 云端项目持久化
+- Vue SDK 包装层
+- 权限和会员逻辑
 
-## Repository Roles
+## 仓库角色
 
-The intended workspace layout is:
+预期的工作区结构是：
 
 ```text
 /Users/fyy/Desktop/projects/canvas-teacher
 /Users/fyy/Desktop/projects/canvas-student
 ```
 
-`canvas-teacher` is the reference implementation. `canvas-student` is the student's hand-written project.
+`canvas-teacher` 是参考实现。`canvas-student` 是你手写练习的项目。
 
-The teacher project should stay readable and explicit. Premature abstractions are avoided until the student has learned the underlying concept.
+参考项目要保持清晰、直接、容易读。在你掌握底层概念之前，避免过早抽象。
 
-## First Implementation Step
+## 第一个实现步骤
 
-The first code lesson is lesson 00: create a Vite React TypeScript project and install the core dependencies.
+第一节代码课是 lesson 00：创建 Vite React TypeScript 项目，并安装核心依赖。
 
-No canvas code is written before the project skeleton is understood.
+在理解项目骨架之前，不写画布功能代码。
