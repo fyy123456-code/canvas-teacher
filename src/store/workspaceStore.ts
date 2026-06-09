@@ -73,6 +73,15 @@ export class WorkSpaceStore {
       zIndex: element.zIndex ?? this.elements.length + 1,
     });
   }
+
+  updateElement(id: string, patch: Partial<CanvasElement>) {
+    const element = this.elements.find((item) => item.id === id);
+    if (!element) {
+      return;
+    }
+
+    Object.assign(element, patch);
+  }
 }
 
 export function createWorkSpaceStore(config: WorkSpaceStoreConfig = {}) {

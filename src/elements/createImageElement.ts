@@ -9,13 +9,26 @@ export interface CreateImageNodeOptions {
   width?: number;
   height?: number;
   zIndex?: number;
+  draggable?: boolean;
+  onDragEnd?: (node: Konva.Image) => void;
 }
 
 function createEmptyImage() {
   return document.createElement('canvas');
 }
 
-export function createImageNode({ layer, id, src, x = 0, y = 0, width, height, zIndex }: CreateImageNodeOptions) {
+export function createImageNode({
+  layer,
+  id,
+  src,
+  x = 0,
+  y = 0,
+  width,
+  height,
+  zIndex,
+  draggable = false,
+  onDragEnd,
+}: CreateImageNodeOptions) {
   const imageNode = new Konva.Image({
     image: createEmptyImage(),
     name: id,
@@ -23,7 +36,12 @@ export function createImageNode({ layer, id, src, x = 0, y = 0, width, height, z
     y,
     width: width ?? 0,
     height: height ?? 0,
-    listening: false,
+    draggable,
+    listening: draggable,
+  });
+
+  imageNode.on('dragend', () => {
+    onDragEnd?.(imageNode);
   });
 
   layer.add(imageNode);

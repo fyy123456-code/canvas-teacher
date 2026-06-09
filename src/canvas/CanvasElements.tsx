@@ -2,6 +2,7 @@ import Konva from 'konva';
 import { observer } from 'mobx-react-lite';
 import { useEffect, useRef } from 'react';
 import { createImageNode } from '../elements/createImageElement';
+import { useStore } from '../store';
 import { ElementType } from '../store/workspaceStore';
 import type { CanvasElement } from '../store/workspaceStore';
 
@@ -11,6 +12,7 @@ export interface CanvasElementsProps {
 }
 
 export const CanvasElements = observer(({ layer, elements }: CanvasElementsProps) => {
+  const store = useStore();
   const nodeMapRef = useRef<Map<string, Konva.Node>>(new Map());
   const elementSnapshot = elements.slice();
 
@@ -44,6 +46,13 @@ export const CanvasElements = observer(({ layer, elements }: CanvasElementsProps
           width: element.width,
           height: element.height,
           zIndex: element.zIndex,
+          draggable: true,
+          onDragEnd: (node) => {
+            store.updateElement(element.id, {
+              x: node.x(),
+              y: node.y(),
+            });
+          },
         });
 
         nodeMap.set(element.id, node);
@@ -51,7 +60,7 @@ export const CanvasElements = observer(({ layer, elements }: CanvasElementsProps
     });
 
     layer.batchDraw();
-  }, [elementSnapshot, layer]);
+  }, [elementSnapshot, layer, store]);
 
   useEffect(() => {
     const nodeMap = nodeMapRef.current;
