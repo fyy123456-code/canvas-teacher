@@ -2,8 +2,9 @@ import Konva from 'konva';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useStore } from '../store/StoreContext';
-import { CANVAS_BACKGROUND_COLOR } from './canvasConfig';
+import { CANVAS_BACKGROUND_COLOR, VIEWPORT_DEMO_OFFSET } from './canvasConfig';
 import { CanvasElements } from './CanvasElements';
+import { createGridGroup } from './createGrid';
 import type { CanvasSize } from './types';
 
 export interface InfiniteCanvasProps {
@@ -37,6 +38,8 @@ export function InfiniteCanvas({
     });
 
     const layer = new Konva.Layer();
+    layer.position(VIEWPORT_DEMO_OFFSET);
+
     const interactionLayer = new Konva.Layer();
     const background = new Konva.Rect({
       name: 'canvas-background',
@@ -47,8 +50,13 @@ export function InfiniteCanvas({
       fill: CANVAS_BACKGROUND_COLOR,
       listening: false,
     });
+    const grid = createGridGroup({
+      width: stageSize.width,
+      height: stageSize.height,
+    });
 
     layer.add(background);
+    layer.add(grid);
     stage.add(layer);
     stage.add(interactionLayer);
 
@@ -88,6 +96,15 @@ export function InfiniteCanvas({
       width: stageSize.width,
       height: stageSize.height,
     });
+
+    const grid = layer.findOne('.canvas-grid');
+    grid?.destroy();
+    const nextGrid = createGridGroup({
+      width: stageSize.width,
+      height: stageSize.height,
+    });
+    layer.add(nextGrid);
+    nextGrid.zIndex(1);
 
     layer.batchDraw();
   }, [stageSize.height, stageSize.width]);

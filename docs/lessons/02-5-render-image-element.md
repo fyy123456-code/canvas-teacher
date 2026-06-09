@@ -351,22 +351,22 @@ setLayer(null);
 找到：
 
 ```ts
-zIndex: element.zIndex ?? this.elements.length,
+zIndex: element.zIndex ?? this.elements.length + 1,
 ```
 
 改成：
 
 ```ts
-zIndex: element.zIndex ?? this.elements.length + 1,
+zIndex: element.zIndex ?? this.elements.length + 2,
 ```
 
 ### 为什么这样改
 
 我们的主 layer 上已经有一个背景矩形。
 
-背景矩形是 layer 里的第一个节点，层级可以理解为 0。
+背景矩形是 layer 里的第一个节点，层级可以理解为 0。后面加入网格后，网格层级是 1。
 
-如果第一张图片的 `zIndex` 也是 0，它可能会被背景盖住。所以图片默认从 1 开始。
+如果第一张图片的 `zIndex` 太低，它可能会被背景或网格盖住。所以图片默认从 2 开始。
 
 ## 本节完成后你应该看到
 

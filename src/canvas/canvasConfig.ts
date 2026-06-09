@@ -6,3 +6,10 @@ export const DEFAULT_STAGE_SIZE: CanvasSize = {
 };
 
 export const CANVAS_BACKGROUND_COLOR = '#ffffff';
+export const GRID_LINE_COLOR = '#e5e7eb';
+export const GRID_SIZE = 40;
+
+export const VIEWPORT_DEMO_OFFSET = {
+  x: 200,
+  y: 100,
+} as const;
