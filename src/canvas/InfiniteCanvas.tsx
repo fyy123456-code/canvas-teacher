@@ -25,6 +25,11 @@ export function InfiniteCanvas({
   const [layer, setLayer] = useState<Konva.Layer | null>(null);
 
   const stageSize = useMemo<CanvasSize>(() => ({ width, height }), [width, height]);
+  const stageSizeRef = useRef<CanvasSize>(stageSize);
+
+  useEffect(() => {
+    stageSizeRef.current = stageSize;
+  }, [stageSize]);
 
   useEffect(() => {
     if (!containerRef.current || stageRef.current) {
@@ -53,6 +58,7 @@ export function InfiniteCanvas({
     const grid = createGridGroup({
       width: stageSize.width,
       height: stageSize.height,
+      viewport: store.viewport,
     });
 
     layer.add(background);
@@ -65,6 +71,24 @@ export function InfiniteCanvas({
     interactionLayerRef.current = interactionLayer;
     store.setStage(stage);
     store.setLayer(layer);
+    store.setRefreshGrid(() => {
+      const currentLayer = layerRef.current;
+      if (!currentLayer) {
+        return;
+      }
+
+      const currentGrid = currentLayer.findOne('.canvas-grid');
+      currentGrid?.destroy();
+      const currentStageSize = stageSizeRef.current;
+      const nextGrid = createGridGroup({
+        width: currentStageSize.width,
+        height: currentStageSize.height,
+        viewport: store.viewport,
+      });
+      currentLayer.add(nextGrid);
+      nextGrid.zIndex(1);
+      currentLayer.batchDraw();
+    });
     setLayer(layer);
 
     layer.draw();
@@ -77,6 +101,7 @@ export function InfiniteCanvas({
       interactionLayerRef.current = null;
       store.setStage(null);
       store.setLayer(null);
+      store.setRefreshGrid(null);
       setLayer(null);
     };
   }, [store]);
@@ -102,12 +127,13 @@ export function InfiniteCanvas({
     const nextGrid = createGridGroup({
       width: stageSize.width,
       height: stageSize.height,
+      viewport: store.viewport,
     });
     layer.add(nextGrid);
     nextGrid.zIndex(1);
 
     layer.batchDraw();
-  }, [stageSize.height, stageSize.width]);
+  }, [stageSize.height, stageSize.width, store.viewport]);
 
   const containerStyle = useMemo<CSSProperties>(
     () => ({

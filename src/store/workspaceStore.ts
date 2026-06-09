@@ -46,6 +46,7 @@ export class WorkSpaceStore {
   viewport: Viewport;
   stage: Konva.Stage | null = null;
   layer: Konva.Layer | null = null;
+  refreshGrid: (() => void) | null = null;
 
   constructor(config: WorkSpaceStoreConfig = {}) {
     this.width = config.width ?? window.innerWidth;
@@ -63,6 +64,7 @@ export class WorkSpaceStore {
       viewport: observable.ref,
       stage: observable.ref,
       layer: observable.ref,
+      refreshGrid: observable.ref,
     });
   }
 
@@ -72,6 +74,10 @@ export class WorkSpaceStore {
 
   setLayer(layer: Konva.Layer | null) {
     this.layer = layer;
+  }
+
+  setRefreshGrid(callback: (() => void) | null) {
+    this.refreshGrid = callback;
   }
 
   setSize(width: number, height: number) {
@@ -85,6 +91,7 @@ export class WorkSpaceStore {
     }
 
     this.viewport.applyToLayer(this.layer);
+    this.refreshGrid?.();
   }
 
   zoomInViewport() {
