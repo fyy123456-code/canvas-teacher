@@ -99,3 +99,39 @@ body {
 .toolbar-file-input {
   display: none;
 }
+
+.zoom-tools-container {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  z-index: 10001;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #f4f5f7;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 2px 10px rgb(0 8 24 / 8%);
+  padding: 6px;
+}
+
+.zoom-tool-button {
+  display: flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #111827;
+  cursor: pointer;
+  font: inherit;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0;
+}
+
+.zoom-tool-button:hover {
+  background: #edeff1;
+}

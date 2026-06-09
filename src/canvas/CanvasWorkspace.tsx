@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Toolbar } from '../components/toolbar';
+import { ZoomTools } from '../components/zoom-tools';
 import { StoreProvider } from '../store';
 import { createWorkSpaceStore } from '../store/workspaceStore';
 import { InfiniteCanvas } from './InfiniteCanvas';
@@ -41,6 +42,7 @@ export function CanvasWorkspace() {
         <section className="workspace-body" aria-label="Canvas workspace">
           <Toolbar />
           <InfiniteCanvas width={stageSize.width} height={stageSize.height} />
+          <ZoomTools />
         </section>
       </main>
     </StoreProvider>

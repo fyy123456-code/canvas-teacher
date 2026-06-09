@@ -1,5 +1,9 @@
 import Konva from 'konva';
 
+const DEFAULT_ZOOM_FACTOR = 1.2;
+const MIN_SCALE = 0.2;
+const MAX_SCALE = 5;
+
 export interface ViewportConfig {
   x?: number;
   y?: number;
@@ -23,7 +27,15 @@ export class Viewport {
   }
 
   setScale(scale: number) {
-    this.scale = scale;
+    this.scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale));
+  }
+
+  zoomIn() {
+    this.setScale(this.scale * DEFAULT_ZOOM_FACTOR);
+  }
+
+  zoomOut() {
+    this.setScale(this.scale / DEFAULT_ZOOM_FACTOR);
   }
 
   applyToLayer(layer: Konva.Layer) {

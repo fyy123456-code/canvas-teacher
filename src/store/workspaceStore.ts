@@ -74,6 +74,24 @@ export class WorkSpaceStore {
     this.layer = layer;
   }
 
+  applyViewport() {
+    if (!this.layer) {
+      return;
+    }
+
+    this.viewport.applyToLayer(this.layer);
+  }
+
+  zoomInViewport() {
+    this.viewport.zoomIn();
+    this.applyViewport();
+  }
+
+  zoomOutViewport() {
+    this.viewport.zoomOut();
+    this.applyViewport();
+  }
+
   generateId() {
     return `element-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
   }
