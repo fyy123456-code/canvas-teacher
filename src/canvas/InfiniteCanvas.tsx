@@ -2,7 +2,7 @@ import Konva from 'konva';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useStore } from '../store/StoreContext';
-import { CANVAS_BACKGROUND_COLOR, VIEWPORT_DEMO_OFFSET } from './canvasConfig';
+import { CANVAS_BACKGROUND_COLOR } from './canvasConfig';
 import { CanvasElements } from './CanvasElements';
 import { createGridGroup } from './createGrid';
 import type { CanvasSize } from './types';
@@ -38,7 +38,7 @@ export function InfiniteCanvas({
     });
 
     const layer = new Konva.Layer();
-    layer.position(VIEWPORT_DEMO_OFFSET);
+    store.viewport.applyToLayer(layer);
 
     const interactionLayer = new Konva.Layer();
     const background = new Konva.Rect({

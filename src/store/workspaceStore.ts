@@ -1,5 +1,6 @@
 import Konva from 'konva';
 import { makeAutoObservable, observable } from 'mobx';
+import { Viewport } from '../viewport';
 
 export const ElementType = {
   IMAGE: 'image',
@@ -35,12 +36,14 @@ export interface WorkSpaceStoreConfig {
   width?: number;
   height?: number;
   elements?: CanvasElement[];
+  viewport?: Viewport;
 }
 
 export class WorkSpaceStore {
   width: number;
   height: number;
   elements: CanvasElement[];
+  viewport: Viewport;
   stage: Konva.Stage | null = null;
   layer: Konva.Layer | null = null;
 
@@ -48,8 +51,16 @@ export class WorkSpaceStore {
     this.width = config.width ?? window.innerWidth;
     this.height = config.height ?? window.innerHeight;
     this.elements = config.elements ?? [];
+    this.viewport =
+      config.viewport ??
+      new Viewport({
+        x: 200,
+        y: 100,
+        scale: 1,
+      });
 
     makeAutoObservable(this, {
+      viewport: observable.ref,
       stage: observable.ref,
       layer: observable.ref,
     });
