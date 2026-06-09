@@ -1,5 +1,8 @@
 import { useRef } from 'react';
 import type { ChangeEvent } from 'react';
+import { useStore } from '../../store';
+import { ElementStatus, ElementType } from '../../store/workspaceStore';
+import { getImageSize } from '../../utils/image';
 
 const TOOLBAR_ITEMS = [
   {
@@ -17,22 +20,33 @@ const TOOLBAR_ITEMS = [
 type ToolbarItemId = (typeof TOOLBAR_ITEMS)[number]['id'];
 
 export function Toolbar() {
+  const store = useStore();
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageButtonClick = () => {
     imageInputRef.current?.click();
   };
 
-  const handleImageFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleImageFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {
       return;
     }
 
-    console.info('[Toolbar] selected image file', {
-      name: file.name,
-      type: file.type,
-      size: file.size,
+    const src = URL.createObjectURL(file);
+    const { width, height } = await getImageSize(src);
+    const id = store.generateId();
+
+    store.addElement({
+      id,
+      type: ElementType.IMAGE,
+      status: ElementStatus.LOADED,
+      file_name: file.name,
+      src,
+      x: 80,
+      y: 80,
+      width,
+      height,
     });
 
     event.target.value = '';
