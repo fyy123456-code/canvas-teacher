@@ -27,14 +27,16 @@ export function CanvasWorkspace() {
 
   useEffect(() => {
     const handleResize = () => {
-      setStageSize(getWindowSize());
+      const nextSize = getWindowSize();
+      store.setSize(nextSize.width, nextSize.height);
+      setStageSize(nextSize);
     };
 
     window.addEventListener('resize', handleResize);
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, []);
+  }, [store]);
 
   return (
     <StoreProvider store={store}>

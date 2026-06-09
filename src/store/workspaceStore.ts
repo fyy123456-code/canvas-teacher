@@ -54,8 +54,8 @@ export class WorkSpaceStore {
     this.viewport =
       config.viewport ??
       new Viewport({
-        x: 200,
-        y: 100,
+        x: 0,
+        y: 0,
         scale: 1,
       });
 
@@ -74,6 +74,11 @@ export class WorkSpaceStore {
     this.layer = layer;
   }
 
+  setSize(width: number, height: number) {
+    this.width = width;
+    this.height = height;
+  }
+
   applyViewport() {
     if (!this.layer) {
       return;
@@ -83,12 +88,18 @@ export class WorkSpaceStore {
   }
 
   zoomInViewport() {
-    this.viewport.zoomIn();
+    this.viewport.zoomInAt({
+      x: this.width / 2,
+      y: this.height / 2,
+    });
     this.applyViewport();
   }
 
   zoomOutViewport() {
-    this.viewport.zoomOut();
+    this.viewport.zoomOutAt({
+      x: this.width / 2,
+      y: this.height / 2,
+    });
     this.applyViewport();
   }
 

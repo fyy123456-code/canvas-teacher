@@ -10,6 +10,11 @@ export interface ViewportConfig {
   scale?: number;
 }
 
+export interface ViewportPoint {
+  x: number;
+  y: number;
+}
+
 export class Viewport {
   x: number;
   y: number;
@@ -36,6 +41,24 @@ export class Viewport {
 
   zoomOut() {
     this.setScale(this.scale / DEFAULT_ZOOM_FACTOR);
+  }
+
+  zoomAt(screenPoint: ViewportPoint, nextScale: number) {
+    const worldPoint = {
+      x: (screenPoint.x - this.x) / this.scale,
+      y: (screenPoint.y - this.y) / this.scale,
+    };
+
+    this.setScale(nextScale);
+    this.setPosition(screenPoint.x - worldPoint.x * this.scale, screenPoint.y - worldPoint.y * this.scale);
+  }
+
+  zoomInAt(screenPoint: ViewportPoint) {
+    this.zoomAt(screenPoint, this.scale * DEFAULT_ZOOM_FACTOR);
+  }
+
+  zoomOutAt(screenPoint: ViewportPoint) {
+    this.zoomAt(screenPoint, this.scale / DEFAULT_ZOOM_FACTOR);
   }
 
   applyToLayer(layer: Konva.Layer) {
