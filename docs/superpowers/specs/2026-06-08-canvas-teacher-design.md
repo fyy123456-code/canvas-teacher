@@ -74,7 +74,7 @@ docs/lessons/
 - React 负责组件树、容器 DOM 和生命周期。
 - Konva 节点使用命令式 API 创建和管理，例如 `new Konva.Stage()`、`new Konva.Layer()`、`new Konva.Image()`。
 - 不使用 `react-konva` 的声明式 `<Stage>`、`<Layer>`、`<Image>` 作为核心画布实现方式。
-- 工作区结构参考 `workSpace/index.tsx`、`workSpace/InfiniteCanvas.tsx`、`workSpace/CanvasElements.tsx`。
+- 工作区结构参考 `workSpace/index.tsx`、`workSpace/InfiniteCanvas.tsx`；元素渲染模块后续单独从零引入。
 - 状态传递参考 `store/StoreContext.tsx` 和 `store/workSpaceStore.ts`。
 - 后续每个功能在实现前都要先查看 `ai-design-canvas` 中的对应模块，再拆成适合教学的小步骤。
 

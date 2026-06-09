@@ -1,9 +1,8 @@
 import Konva from 'konva';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type { CSSProperties } from 'react';
 import { useStore } from '../store/StoreContext';
 import { CANVAS_BACKGROUND_COLOR } from './canvasConfig';
-import { CanvasElements } from './CanvasElements';
 import type { CanvasSize } from './types';
 
 export interface InfiniteCanvasProps {
@@ -21,7 +20,6 @@ export function InfiniteCanvas({
   const stageRef = useRef<Konva.Stage | null>(null);
   const layerRef = useRef<Konva.Layer | null>(null);
   const interactionLayerRef = useRef<Konva.Layer | null>(null);
-  const [layer, setLayer] = useState<Konva.Layer | null>(null);
 
   const stageSize = useMemo<CanvasSize>(() => ({ width, height }), [width, height]);
 
@@ -57,7 +55,6 @@ export function InfiniteCanvas({
     interactionLayerRef.current = interactionLayer;
     store.setStage(stage);
     store.setLayer(layer);
-    setLayer(layer);
 
     layer.draw();
     interactionLayer.draw();
@@ -69,7 +66,6 @@ export function InfiniteCanvas({
       interactionLayerRef.current = null;
       store.setStage(null);
       store.setLayer(null);
-      setLayer(null);
     };
   }, [store]);
 
@@ -107,9 +103,7 @@ export function InfiniteCanvas({
 
   return (
     <div ref={wrapperRef} className="canvas-wrapper" data-infinite-canvas-wrapper="true">
-      <div ref={containerRef} className="canvas-container" data-infinite-canvas-children="true" style={containerStyle}>
-        <CanvasElements layer={layer} elements={store.elements} />
-      </div>
+      <div ref={containerRef} className="canvas-container" data-infinite-canvas-children="true" style={containerStyle} />
     </div>
   );
 }

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Toolbar } from '../components/toolbar';
 import { StoreProvider } from '../store';
 import { createWorkSpaceStore } from '../store/workspaceStore';
 import { InfiniteCanvas } from './InfiniteCanvas';
@@ -39,7 +38,6 @@ export function CanvasWorkspace() {
     <StoreProvider store={store}>
       <main className="workspace-container" tabIndex={2}>
         <section className="workspace-body" aria-label="Canvas workspace">
-          <Toolbar />
           <InfiniteCanvas width={stageSize.width} height={stageSize.height} />
         </section>
       </main>

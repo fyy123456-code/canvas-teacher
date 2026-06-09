@@ -4,7 +4,7 @@
 
 **Goal:** 建立可扩展的画布模块封装，并渲染第一个空白 Konva Stage。
 
-**Architecture:** `App` 只负责进入编辑器页面；`CanvasWorkspace` 负责工作区布局和 StoreProvider；`InfiniteCanvas` 使用 `new Konva.Stage()`、`new Konva.Layer()` 命令式创建 Stage 和 Layer；`CanvasElements` 后续负责把 store 元素渲染成 Konva 节点。本节不渲染真实元素，只建立和 `ai-design-canvas` 一致的底层挂载方式。
+**Architecture:** `App` 只负责进入编辑器页面；`CanvasWorkspace` 负责工作区布局和 StoreProvider；`InfiniteCanvas` 使用 `new Konva.Stage()`、`new Konva.Layer()` 命令式创建 Stage 和 Layer。本节不定义元素、不渲染真实元素，只建立和 `ai-design-canvas` 一致的底层挂载方式。
 
 **Tech Stack:** React、TypeScript、Vite、Konva、MobX、SCSS。
 
@@ -18,7 +18,6 @@
 - Create: `src/canvas/types.ts`，定义画布尺寸类型。
 - Create: `src/canvas/canvasConfig.ts`，保存默认画布尺寸和背景色。
 - Create: `src/canvas/InfiniteCanvas.tsx`，命令式创建 Konva Stage 和 Layer。
-- Create: `src/canvas/CanvasElements.tsx`，预留元素渲染入口。
 - Create: `src/canvas/CanvasWorkspace.tsx`，封装画布工作区外壳和 StoreProvider。
 - Create: `src/canvas/index.ts`，统一导出 canvas 模块。
 - Modify: `src/App.tsx`，从说明页切换为画布工作区。
@@ -34,7 +33,6 @@
 - Create: `src/store/StoreContext.tsx`
 - Create: `src/store/index.ts`
 - Create: `src/canvas/InfiniteCanvas.tsx`
-- Create: `src/canvas/CanvasElements.tsx`
 - Create: `src/canvas/CanvasWorkspace.tsx`
 - Create: `src/canvas/index.ts`
 - Modify: `src/App.tsx`
@@ -50,7 +48,7 @@
 
 - [ ] **Step 3: 封装 `CanvasWorkspace`**
 
-创建工作区外壳，负责标题、StoreProvider、画布居中区域和后续工具栏接入位置。
+创建工作区外壳，负责 StoreProvider 和画布容器。
 
 - [ ] **Step 4: 修改 `App`**
 
