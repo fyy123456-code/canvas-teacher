@@ -227,7 +227,7 @@ generateId() {
 addElement(element: CanvasElement) {
   this.elements.push({
     ...element,
-    zIndex: element.zIndex ?? this.elements.length,
+    zIndex: element.zIndex ?? this.elements.length + 1,
   });
 }
 ```
@@ -238,7 +238,7 @@ addElement(element: CanvasElement) {
 
 `addElement` 是所有新增元素的统一入口。现在只是 push 到数组里，后面会在这里扩展层级、历史记录、选中等逻辑。
 
-`zIndex` 默认用当前数组长度，表示越晚添加的元素层级越高。
+`zIndex` 默认用当前数组长度加 1，表示越晚添加的元素层级越高，并且给背景矩形保留第 0 层。
 
 ## 第 2 步：修改 `src/store/index.ts`
 

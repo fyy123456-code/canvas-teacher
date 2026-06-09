@@ -70,7 +70,7 @@ export class WorkSpaceStore {
   addElement(element: CanvasElement) {
     this.elements.push({
       ...element,
-      zIndex: element.zIndex ?? this.elements.length,
+      zIndex: element.zIndex ?? this.elements.length + 1,
     });
   }
 }
