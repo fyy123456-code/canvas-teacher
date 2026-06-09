@@ -2,14 +2,11 @@ import Konva from 'konva';
 import { makeAutoObservable, observable } from 'mobx';
 
 export const ElementType = {
-  IMAGE: 'image',
   TEXT: 'text',
 } as const;
 
 export enum ElementStatus {
   SUCCESS = 'success',
-  LOADED = 'loaded',
-  FAILED = 'failed',
 }
 
 export type ElementType = (typeof ElementType)[keyof typeof ElementType];
@@ -38,12 +35,6 @@ export interface BaseElementData {
   opacity?: number;
 }
 
-export interface ImageElementData extends BaseElementData {
-  type: typeof ElementType.IMAGE;
-  src: string;
-  imageElement?: HTMLImageElement | HTMLCanvasElement;
-}
-
 export interface TextElementData extends BaseElementData {
   type: typeof ElementType.TEXT;
   text: string;
@@ -58,7 +49,7 @@ export interface TextElementData extends BaseElementData {
   letterSpacing?: number;
 }
 
-export type CanvasElement = ImageElementData | TextElementData;
+export type CanvasElement = TextElementData;
 
 export interface WorkSpaceStoreConfig {
   width?: number;
@@ -70,7 +61,6 @@ export class WorkSpaceStore {
   width: number;
   height: number;
   elements: CanvasElement[];
-  private idCounter = 0;
   editMode: EditMode = 'select';
   toolbarList: ToolBarItem[] = [
     { toolName: ToolBarItemEnum.UploadImage },
@@ -101,24 +91,6 @@ export class WorkSpaceStore {
 
   setEditMode(mode: EditMode) {
     this.editMode = mode;
-  }
-
-  generateId(prefix = 'element') {
-    this.idCounter += 1;
-    return `${prefix}-${Date.now()}-${this.idCounter}`;
-  }
-
-  addElement(element: CanvasElement) {
-    this.elements.push(element);
-  }
-
-  updateElement(elementId: string, nextElement: Partial<CanvasElement>) {
-    const element = this.elements.find((item) => item.id === elementId);
-    if (!element) {
-      return;
-    }
-
-    Object.assign(element, nextElement);
   }
 }
 
