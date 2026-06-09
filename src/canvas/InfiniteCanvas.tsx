@@ -1,7 +1,9 @@
 import Konva from 'konva';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { observer } from 'mobx-react-lite';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useStore } from '../store/StoreContext';
+import { ElementStatus, ElementType } from '../store/workspaceStore';
 import { CANVAS_BACKGROUND_COLOR } from './canvasConfig';
 import { CanvasElements } from './CanvasElements';
 import type { CanvasSize } from './types';
@@ -11,11 +13,13 @@ export interface InfiniteCanvasProps {
   height?: number;
 }
 
-export function InfiniteCanvas({
+export const InfiniteCanvas = observer(function InfiniteCanvas({
   width = window.innerWidth,
   height = window.innerHeight,
 }: InfiniteCanvasProps) {
   const store = useStore();
+  const editMode = store.editMode;
+  const elements = store.elements.slice();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage | null>(null);
@@ -24,6 +28,38 @@ export function InfiniteCanvas({
   const [layer, setLayer] = useState<Konva.Layer | null>(null);
 
   const stageSize = useMemo<CanvasSize>(() => ({ width, height }), [width, height]);
+
+  const addTextElementAtStagePoint = useCallback(
+    (point: Konva.Vector2d) => {
+      const layer = layerRef.current;
+      if (!layer) {
+        return;
+      }
+
+      const transform = layer.getAbsoluteTransform().copy();
+      transform.invert();
+      const position = transform.point(point);
+      const id = store.generateId('text');
+
+      store.addElement({
+        id,
+        type: ElementType.TEXT,
+        status: ElementStatus.SUCCESS,
+        file_name: '',
+        text: '双击编辑文字',
+        x: position.x,
+        y: position.y,
+        width: 260,
+        fontSize: 32,
+        fontFamily: 'Arial',
+        fill: '#111827',
+        opacity: 1,
+      });
+
+      store.setEditMode('select');
+    },
+    [store],
+  );
 
   useEffect(() => {
     if (!containerRef.current || stageRef.current) {
@@ -92,6 +128,36 @@ export function InfiniteCanvas({
     layer.batchDraw();
   }, [stageSize.height, stageSize.width]);
 
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) {
+      return;
+    }
+
+    stage.container().style.cursor = editMode === 'text' ? 'text' : 'default';
+  }, [editMode]);
+
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage || editMode !== 'text') {
+      return;
+    }
+
+    const handleStageClick = () => {
+      const pointer = stage.getPointerPosition();
+      if (!pointer) {
+        return;
+      }
+
+      addTextElementAtStagePoint(pointer);
+    };
+
+    stage.on('click', handleStageClick);
+    return () => {
+      stage.off('click', handleStageClick);
+    };
+  }, [addTextElementAtStagePoint, editMode]);
+
   const containerStyle = useMemo<CSSProperties>(
     () => ({
       width: '100%',
@@ -106,10 +172,13 @@ export function InfiniteCanvas({
   );
 
   return (
-    <div ref={wrapperRef} className="canvas-wrapper" data-infinite-canvas-wrapper="true">
-      <div ref={containerRef} className="canvas-container" data-infinite-canvas-children="true" style={containerStyle}>
-        <CanvasElements layer={layer} elements={store.elements} />
-      </div>
+    <div
+      ref={wrapperRef}
+      className="canvas-wrapper"
+      data-infinite-canvas-wrapper="true"
+    >
+      <div ref={containerRef} className="canvas-container" data-infinite-canvas-children="true" style={containerStyle} />
+      <CanvasElements layer={layer} elements={elements} />
     </div>
   );
-}
+});
