@@ -1,6 +1,6 @@
 import Konva from 'konva';
 import { observer } from 'mobx-react-lite';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createImageNode } from '../elements/createImageElement';
 import { useStore } from '../store';
 import { ElementType } from '../store/workspaceStore';
@@ -14,8 +14,11 @@ export interface CanvasElementsProps {
 export const CanvasElements = observer(({ layer, elements }: CanvasElementsProps) => {
   const store = useStore();
   const nodeMapRef = useRef<Map<string, Konva.Node>>(new Map());
+  const selectionRectRef = useRef<Konva.Rect | null>(null);
+  const [selectionUpdateKey, setSelectionUpdateKey] = useState(0);
   const elementSnapshot = elements.slice();
   const isViewportDragMode = store.editMode === 'viewport-drag';
+  const selectedId = store.selectedIds[0] ?? null;
 
   useEffect(() => {
     if (!layer) {
@@ -48,11 +51,19 @@ export const CanvasElements = observer(({ layer, elements }: CanvasElementsProps
           height: element.height,
           zIndex: element.zIndex,
           draggable: !isViewportDragMode,
+          onSelect: () => {
+            if (store.editMode !== 'select') {
+              return;
+            }
+
+            store.selectElement(element.id);
+          },
           onDragEnd: (node) => {
             store.updateElement(element.id, {
               x: node.x(),
               y: node.y(),
             });
+            setSelectionUpdateKey((value) => value + 1);
           },
         });
 
@@ -73,9 +84,58 @@ export const CanvasElements = observer(({ layer, elements }: CanvasElementsProps
   }, [isViewportDragMode, layer]);
 
   useEffect(() => {
+    if (!layer || !selectedId) {
+      selectionRectRef.current?.destroy();
+      selectionRectRef.current = null;
+      layer?.batchDraw();
+      return;
+    }
+
+    const selectedNode = nodeMapRef.current.get(selectedId);
+    if (!selectedNode) {
+      selectionRectRef.current?.destroy();
+      selectionRectRef.current = null;
+      layer.batchDraw();
+      return;
+    }
+
+    const rect = selectionRectRef.current ?? new Konva.Rect({
+      name: 'selection-border',
+      listening: false,
+      stroke: '#2563eb',
+      strokeWidth: 2 / store.viewport.scale,
+      dash: [8 / store.viewport.scale, 4 / store.viewport.scale],
+    });
+    const selectedRect = selectedNode.getClientRect({
+      relativeTo: layer,
+      skipStroke: true,
+      skipShadow: true,
+    });
+
+    rect.setAttrs({
+      x: selectedRect.x,
+      y: selectedRect.y,
+      width: selectedRect.width,
+      height: selectedRect.height,
+      strokeWidth: 2 / store.viewport.scale,
+      dash: [8 / store.viewport.scale, 4 / store.viewport.scale],
+    });
+
+    if (!selectionRectRef.current) {
+      selectionRectRef.current = rect;
+      layer.add(rect);
+    }
+
+    rect.moveToTop();
+    layer.batchDraw();
+  }, [layer, selectedId, selectionUpdateKey, store.viewport.scale]);
+
+  useEffect(() => {
     const nodeMap = nodeMapRef.current;
 
     return () => {
+      selectionRectRef.current?.destroy();
+      selectionRectRef.current = null;
       nodeMap.forEach((node) => {
         node.destroy();
       });

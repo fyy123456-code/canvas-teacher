@@ -45,6 +45,7 @@ export class WorkSpaceStore {
   height: number;
   elements: CanvasElement[];
   editMode: EditMode = 'select';
+  selectedIds: string[] = [];
   viewport: Viewport;
   stage: Konva.Stage | null = null;
   layer: Konva.Layer | null = null;
@@ -89,6 +90,18 @@ export class WorkSpaceStore {
 
   setEditMode(mode: EditMode) {
     this.editMode = mode;
+  }
+
+  setSelectedIds(ids: string[]) {
+    this.selectedIds = ids;
+  }
+
+  selectElement(id: string) {
+    this.setSelectedIds([id]);
+  }
+
+  clearSelection() {
+    this.setSelectedIds([]);
   }
 
   applyViewport() {

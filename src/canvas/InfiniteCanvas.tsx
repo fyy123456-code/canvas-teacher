@@ -92,12 +92,25 @@ export function InfiniteCanvas({
     store.viewport.attach(stage, layer, () => {
       store.refreshGrid?.();
     });
+    const handleStageClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
+      if (store.editMode !== 'select') {
+        return;
+      }
+
+      if (event.target !== stage) {
+        return;
+      }
+
+      store.clearSelection();
+    };
+    stage.on('click tap', handleStageClick);
     setLayer(layer);
 
     layer.draw();
     interactionLayer.draw();
 
     return () => {
+      stage.off('click tap', handleStageClick);
       store.viewport.destroy();
       stage.destroy();
       stageRef.current = null;
