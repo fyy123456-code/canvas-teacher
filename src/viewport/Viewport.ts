@@ -39,12 +39,16 @@ export class Viewport {
     this.onTransformChange = onTransformChange ?? null;
     this.applyToLayer(layer);
 
+    stage.container().addEventListener('wheel', this.handleWheel, {
+      passive: false,
+    });
     stage.on('mousedown', this.handleStageMouseDown);
     window.addEventListener('mousemove', this.handleWindowMouseMove);
     window.addEventListener('mouseup', this.handleWindowMouseUp);
   }
 
   destroy() {
+    this.stage?.container().removeEventListener('wheel', this.handleWheel);
     this.stage?.off('mousedown', this.handleStageMouseDown);
     window.removeEventListener('mousemove', this.handleWindowMouseMove);
     window.removeEventListener('mouseup', this.handleWindowMouseUp);
@@ -143,6 +147,16 @@ export class Viewport {
 
   private handleWindowMouseUp = () => {
     this.endDrag();
+  };
+
+  private handleWheel = (event: WheelEvent) => {
+    event.preventDefault();
+
+    if (event.ctrlKey || event.metaKey) {
+      return;
+    }
+
+    this.moveBy(-event.deltaX * 0.8, -event.deltaY * 0.8);
   };
 
   private startDrag() {
