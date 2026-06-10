@@ -83,8 +83,7 @@ deleteSelectedElements() {
   }
 
   const selectedIdSet = new Set(this.selectedIds);
-  const nextElements = this.elements.filter((element) => !selectedIdSet.has(element.id));
-  this.elements.splice(0, this.elements.length, ...nextElements);
+  this.elements = this.elements.filter((element) => !selectedIdSet.has(element.id));
   this.clearSelection();
 }
 ```
@@ -97,23 +96,15 @@ deleteSelectedElements() {
 this.elements
 ```
 
-这里不要写成：
+我们用：
 
 ```ts
-this.elements = this.elements.filter(...)
+this.elements.filter(...)
 ```
 
-原因是当前 `InfiniteCanvas` 不是 observer，如果直接替换整个数组，React 外层组件不一定把新的数组引用传给 `CanvasElements`。
+保留没有被选中的元素，过滤掉被选中的元素。
 
-所以这里用：
-
-```ts
-this.elements.splice(0, this.elements.length, ...nextElements)
-```
-
-在原数组上替换内容。
-
-这样 `CanvasElements` 里拿到的还是同一个 observable 数组，MobX 能通知它重新计算并销毁对应 Konva 节点。
+注意：`InfiniteCanvas` 需要是 `observer`，这样 `this.elements` 替换成新数组后，`InfiniteCanvas` 会重新渲染并把新的 `elements` 传给 `CanvasElements`。
 
 这里先把 `selectedIds` 转成：
 

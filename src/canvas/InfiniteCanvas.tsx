@@ -1,4 +1,5 @@
 import Konva from 'konva';
+import { observer } from 'mobx-react-lite';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useStore } from '../store/StoreContext';
@@ -12,11 +13,12 @@ export interface InfiniteCanvasProps {
   height?: number;
 }
 
-export function InfiniteCanvas({
+export const InfiniteCanvas = observer(function InfiniteCanvas({
   width = window.innerWidth,
   height = window.innerHeight,
 }: InfiniteCanvasProps) {
   const store = useStore();
+  const elements = store.elements;
   const wrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage | null>(null);
@@ -168,8 +170,8 @@ export function InfiniteCanvas({
   return (
     <div ref={wrapperRef} className="canvas-wrapper" data-infinite-canvas-wrapper="true">
       <div ref={containerRef} className="canvas-container" data-infinite-canvas-children="true" style={containerStyle}>
-        <CanvasElements layer={layer} elements={store.elements} />
+        <CanvasElements layer={layer} elements={elements} />
       </div>
     </div>
   );
-}
+});

@@ -110,8 +110,7 @@ export class WorkSpaceStore {
     }
 
     const selectedIdSet = new Set(this.selectedIds);
-    const nextElements = this.elements.filter((element) => !selectedIdSet.has(element.id));
-    this.elements.splice(0, this.elements.length, ...nextElements);
+    this.elements = this.elements.filter((element) => !selectedIdSet.has(element.id));
     this.clearSelection();
   }
 
