@@ -104,6 +104,17 @@ export class WorkSpaceStore {
     this.setSelectedIds([]);
   }
 
+  deleteSelectedElements() {
+    if (this.selectedIds.length === 0) {
+      return;
+    }
+
+    const selectedIdSet = new Set(this.selectedIds);
+    const nextElements = this.elements.filter((element) => !selectedIdSet.has(element.id));
+    this.elements.splice(0, this.elements.length, ...nextElements);
+    this.clearSelection();
+  }
+
   applyViewport() {
     if (!this.layer) {
       return;
