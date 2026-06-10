@@ -92,7 +92,8 @@ body {
   padding: 0;
 }
 
-.toolbar-button:hover {
+.toolbar-button:hover,
+.toolbar-button-active {
   background: #edeff1;
 }
 

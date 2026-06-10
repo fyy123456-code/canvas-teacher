@@ -31,6 +31,7 @@ export interface ImageElementData extends BaseElementData {
 }
 
 export type CanvasElement = ImageElementData;
+export type EditMode = 'select' | 'viewport-drag';
 
 export interface WorkSpaceStoreConfig {
   width?: number;
@@ -43,6 +44,7 @@ export class WorkSpaceStore {
   width: number;
   height: number;
   elements: CanvasElement[];
+  editMode: EditMode = 'select';
   viewport: Viewport;
   stage: Konva.Stage | null = null;
   layer: Konva.Layer | null = null;
@@ -83,6 +85,10 @@ export class WorkSpaceStore {
   setSize(width: number, height: number) {
     this.width = width;
     this.height = height;
+  }
+
+  setEditMode(mode: EditMode) {
+    this.editMode = mode;
   }
 
   applyViewport() {

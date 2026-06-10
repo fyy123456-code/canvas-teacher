@@ -6,6 +6,11 @@ import { getImageSize } from '../../utils/image';
 
 const TOOLBAR_ITEMS = [
   {
+    id: 'hand',
+    label: '手',
+    title: '拖动画布',
+  },
+  {
     id: 'upload-image',
     label: '图片',
     title: '上传图片',
@@ -53,6 +58,11 @@ export function Toolbar() {
   };
 
   const handleToolClick = (itemId: ToolbarItemId) => {
+    if (itemId === 'hand') {
+      store.setEditMode(store.editMode === 'viewport-drag' ? 'select' : 'viewport-drag');
+      return;
+    }
+
     if (itemId === 'upload-image') {
       handleImageButtonClick();
     }
@@ -68,17 +78,22 @@ export function Toolbar() {
         onChange={handleImageFileChange}
       />
       <div className="toolbar-panel">
-        {TOOLBAR_ITEMS.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            className="toolbar-button"
-            title={item.title}
-            onClick={() => handleToolClick(item.id)}
-          >
-            {item.label}
-          </button>
-        ))}
+        {TOOLBAR_ITEMS.map((item) => {
+          const isActive = item.id === 'hand' && store.editMode === 'viewport-drag';
+
+          return (
+            <button
+              key={item.id}
+              type="button"
+              className={isActive ? 'toolbar-button toolbar-button-active' : 'toolbar-button'}
+              title={item.title}
+              aria-pressed={isActive}
+              onClick={() => handleToolClick(item.id)}
+            >
+              {item.label}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
