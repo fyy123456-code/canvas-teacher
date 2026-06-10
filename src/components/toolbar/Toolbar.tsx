@@ -1,3 +1,4 @@
+import { observer } from 'mobx-react-lite';
 import { useRef } from 'react';
 import type { ChangeEvent } from 'react';
 import { useStore } from '../../store';
@@ -24,7 +25,7 @@ const TOOLBAR_ITEMS = [
 
 type ToolbarItemId = (typeof TOOLBAR_ITEMS)[number]['id'];
 
-export function Toolbar() {
+export const Toolbar = observer(() => {
   const store = useStore();
   const imageInputRef = useRef<HTMLInputElement>(null);
 
@@ -59,7 +60,9 @@ export function Toolbar() {
 
   const handleToolClick = (itemId: ToolbarItemId) => {
     if (itemId === 'hand') {
-      store.setEditMode(store.editMode === 'viewport-drag' ? 'select' : 'viewport-drag');
+      const nextMode = store.editMode === 'viewport-drag' ? 'select' : 'viewport-drag';
+      store.setEditMode(nextMode);
+      store.viewport.setViewportDragMode(nextMode === 'viewport-drag');
       return;
     }
 
@@ -97,4 +100,4 @@ export function Toolbar() {
       </div>
     </div>
   );
-}
+});

@@ -15,6 +15,7 @@ export const CanvasElements = observer(({ layer, elements }: CanvasElementsProps
   const store = useStore();
   const nodeMapRef = useRef<Map<string, Konva.Node>>(new Map());
   const elementSnapshot = elements.slice();
+  const isViewportDragMode = store.editMode === 'viewport-drag';
 
   useEffect(() => {
     if (!layer) {
@@ -46,7 +47,7 @@ export const CanvasElements = observer(({ layer, elements }: CanvasElementsProps
           width: element.width,
           height: element.height,
           zIndex: element.zIndex,
-          draggable: true,
+          draggable: !isViewportDragMode,
           onDragEnd: (node) => {
             store.updateElement(element.id, {
               x: node.x(),
@@ -60,7 +61,16 @@ export const CanvasElements = observer(({ layer, elements }: CanvasElementsProps
     });
 
     layer.batchDraw();
-  }, [elementSnapshot, layer, store]);
+  }, [elementSnapshot, isViewportDragMode, layer, store]);
+
+  useEffect(() => {
+    const nodeMap = nodeMapRef.current;
+    nodeMap.forEach((node) => {
+      node.draggable(!isViewportDragMode);
+      node.listening(!isViewportDragMode);
+    });
+    layer?.batchDraw();
+  }, [isViewportDragMode, layer]);
 
   useEffect(() => {
     const nodeMap = nodeMapRef.current;
