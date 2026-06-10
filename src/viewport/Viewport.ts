@@ -31,6 +31,10 @@ export class Viewport {
     this.y = y;
   }
 
+  moveBy(deltaX: number, deltaY: number) {
+    this.setPosition(this.x + deltaX, this.y + deltaY);
+  }
+
   setScale(scale: number) {
     this.scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale));
   }

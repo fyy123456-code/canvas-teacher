@@ -66,6 +66,50 @@ export function InfiniteCanvas({
     stage.add(layer);
     stage.add(interactionLayer);
 
+    const handlePointerDown = (event: Konva.KonvaEventObject<PointerEvent>) => {
+      if (store.editMode !== 'viewport-drag') {
+        return;
+      }
+
+      if (event.target !== stage) {
+        return;
+      }
+
+      const pointerPosition = stage.getPointerPosition();
+      if (!pointerPosition) {
+        return;
+      }
+
+      store.startViewportDrag({
+        lastX: pointerPosition.x,
+        lastY: pointerPosition.y,
+      });
+    };
+
+    const handlePointerMove = () => {
+      if (store.editMode !== 'viewport-drag') {
+        return;
+      }
+
+      const pointerPosition = stage.getPointerPosition();
+      if (!pointerPosition) {
+        return;
+      }
+
+      store.dragViewportTo({
+        lastX: pointerPosition.x,
+        lastY: pointerPosition.y,
+      });
+    };
+
+    const handlePointerUp = () => {
+      store.endViewportDrag();
+    };
+
+    stage.on('pointerdown', handlePointerDown);
+    stage.on('pointermove', handlePointerMove);
+    stage.on('pointerup pointerleave', handlePointerUp);
+
     stageRef.current = stage;
     layerRef.current = layer;
     interactionLayerRef.current = interactionLayer;
@@ -95,6 +139,9 @@ export function InfiniteCanvas({
     interactionLayer.draw();
 
     return () => {
+      stage.off('pointerdown', handlePointerDown);
+      stage.off('pointermove', handlePointerMove);
+      stage.off('pointerup pointerleave', handlePointerUp);
       stage.destroy();
       stageRef.current = null;
       layerRef.current = null;

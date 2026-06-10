@@ -40,6 +40,11 @@ export interface WorkSpaceStoreConfig {
   viewport?: Viewport;
 }
 
+export interface ViewportDragState {
+  lastX: number;
+  lastY: number;
+}
+
 export class WorkSpaceStore {
   width: number;
   height: number;
@@ -49,6 +54,7 @@ export class WorkSpaceStore {
   stage: Konva.Stage | null = null;
   layer: Konva.Layer | null = null;
   refreshGrid: (() => void) | null = null;
+  viewportDragState: ViewportDragState | null = null;
 
   constructor(config: WorkSpaceStoreConfig = {}) {
     this.width = config.width ?? window.innerWidth;
@@ -67,6 +73,7 @@ export class WorkSpaceStore {
       stage: observable.ref,
       layer: observable.ref,
       refreshGrid: observable.ref,
+      viewportDragState: observable.ref,
     });
   }
 
@@ -114,6 +121,27 @@ export class WorkSpaceStore {
       y: this.height / 2,
     });
     this.applyViewport();
+  }
+
+  startViewportDrag(point: ViewportDragState) {
+    this.viewportDragState = point;
+  }
+
+  dragViewportTo(point: ViewportDragState) {
+    if (!this.viewportDragState) {
+      return;
+    }
+
+    const deltaX = point.lastX - this.viewportDragState.lastX;
+    const deltaY = point.lastY - this.viewportDragState.lastY;
+
+    this.viewport.moveBy(deltaX, deltaY);
+    this.viewportDragState = point;
+    this.applyViewport();
+  }
+
+  endViewportDrag() {
+    this.viewportDragState = null;
   }
 
   generateId() {
