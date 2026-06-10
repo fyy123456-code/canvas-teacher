@@ -84,6 +84,23 @@ export const CanvasElements = observer(({ layer, elements }: CanvasElementsProps
   }, [isViewportDragMode, layer]);
 
   useEffect(() => {
+    if (!layer) {
+      return;
+    }
+
+    const updateSelectionBorder = () => {
+      setSelectionUpdateKey((value) => value + 1);
+    };
+    const viewportEvents = 'xChange.selectionBorder yChange.selectionBorder scaleXChange.selectionBorder scaleYChange.selectionBorder';
+
+    layer.on(viewportEvents, updateSelectionBorder);
+
+    return () => {
+      layer.off(viewportEvents);
+    };
+  }, [layer]);
+
+  useEffect(() => {
     if (!layer || !selectedId) {
       selectionRectRef.current?.destroy();
       selectionRectRef.current = null;
