@@ -3,6 +3,8 @@ import Konva from 'konva';
 const DEFAULT_ZOOM_FACTOR = 1.2;
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 5;
+const WHEEL_ZOOM_FACTOR = 0.02;
+const MAX_WHEEL_DELTA = 5;
 
 export interface ViewportConfig {
   x?: number;
@@ -153,11 +155,28 @@ export class Viewport {
     event.preventDefault();
 
     if (event.ctrlKey || event.metaKey) {
+      this.handleWheelZoom(event);
       return;
     }
 
     this.moveBy(-event.deltaX * 0.8, -event.deltaY * 0.8);
   };
+
+  private handleWheelZoom(event: WheelEvent) {
+    if (!this.stage) {
+      return;
+    }
+
+    const pointer = this.stage.getPointerPosition();
+    if (!pointer) {
+      return;
+    }
+
+    const clampedDelta = Math.max(-MAX_WHEEL_DELTA, Math.min(MAX_WHEEL_DELTA, event.deltaY));
+    const nextScale = this.scale * Math.pow(2, -clampedDelta * WHEEL_ZOOM_FACTOR);
+
+    this.zoomAt(pointer, nextScale);
+  }
 
   private startDrag() {
     if (!this.stage) {
