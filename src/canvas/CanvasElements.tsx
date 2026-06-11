@@ -7,6 +7,7 @@ import { ElementType } from "../store/workspaceStore";
 import type { CanvasElement } from "../store/workspaceStore";
 
 const MIN_TRANSFORM_SIZE = 20;
+const MAX_TRANSFORM_SIZE = 3000;
 
 export interface CanvasElementsProps {
   layer: Konva.Layer | null;
@@ -98,7 +99,9 @@ export const CanvasElements = observer(
         boundBoxFunc: (oldBox, newBox) => {
           if (
             newBox.width < MIN_TRANSFORM_SIZE ||
-            newBox.height < MIN_TRANSFORM_SIZE
+            newBox.height < MIN_TRANSFORM_SIZE ||
+            newBox.width > MAX_TRANSFORM_SIZE ||
+            newBox.height > MAX_TRANSFORM_SIZE
           ) {
             return oldBox;
           }
