@@ -106,6 +106,41 @@ export const CanvasElements = observer(({ layer, elements }: CanvasElementsProps
     transformer.on('mousedown', (event) => {
       event.cancelBubble = true;
     });
+    transformer.on('transformend', () => {
+      const [node] = transformer.nodes();
+      if (!node) {
+        return;
+      }
+
+      const elementId = node.name();
+      if (!elementId) {
+        return;
+      }
+
+      const nextWidth = node.width() * node.scaleX();
+      const nextHeight = node.height() * node.scaleY();
+      const nextX = node.x();
+      const nextY = node.y();
+
+      node.setAttrs({
+        x: nextX,
+        y: nextY,
+        width: nextWidth,
+        height: nextHeight,
+        scaleX: 1,
+        scaleY: 1,
+      });
+
+      store.updateElement(elementId, {
+        x: nextX,
+        y: nextY,
+        width: nextWidth,
+        height: nextHeight,
+      });
+      transformer.forceUpdate();
+      setSelectionUpdateKey((value) => value + 1);
+      layer.batchDraw();
+    });
     transformerRef.current = transformer;
     layer.batchDraw();
 
