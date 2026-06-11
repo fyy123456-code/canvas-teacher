@@ -15,6 +15,7 @@ export const CanvasElements = observer(({ layer, elements }: CanvasElementsProps
   const store = useStore();
   const nodeMapRef = useRef<Map<string, Konva.Node>>(new Map());
   const selectionRectRef = useRef<Konva.Rect | null>(null);
+  const transformerRef = useRef<Konva.Transformer | null>(null);
   const [selectionUpdateKey, setSelectionUpdateKey] = useState(0);
   const elementSnapshot = elements.slice();
   const isViewportDragMode = store.editMode === 'viewport-drag';
@@ -88,6 +89,63 @@ export const CanvasElements = observer(({ layer, elements }: CanvasElementsProps
       return;
     }
 
+    const transformer = new Konva.Transformer({
+      rotateEnabled: false,
+      flipEnabled: false,
+      borderStroke: '#4C90FF',
+      borderStrokeWidth: 2,
+      anchorSize: 10,
+      anchorStroke: '#d4d6dc',
+      anchorStrokeWidth: 2,
+      anchorCornerRadius: 5,
+      enabledAnchors: ['top-left', 'top-right', 'bottom-left', 'bottom-right'],
+    });
+
+    layer.add(transformer);
+    transformer.nodes([]);
+    transformer.on('mousedown', (event) => {
+      event.cancelBubble = true;
+    });
+    transformerRef.current = transformer;
+    layer.batchDraw();
+
+    return () => {
+      transformer.nodes([]);
+      transformer.destroy();
+      transformerRef.current = null;
+      layer.batchDraw();
+    };
+  }, [layer]);
+
+  useEffect(() => {
+    const transformer = transformerRef.current;
+    if (!layer || !transformer) {
+      return;
+    }
+
+    if (!selectedId || isViewportDragMode) {
+      transformer.nodes([]);
+      layer.batchDraw();
+      return;
+    }
+
+    const selectedNode = nodeMapRef.current.get(selectedId);
+    if (!selectedNode) {
+      transformer.nodes([]);
+      layer.batchDraw();
+      return;
+    }
+
+    transformer.nodes([selectedNode]);
+    transformer.moveToTop();
+    layer.batchDraw();
+  }, [isViewportDragMode, layer, selectedId]);
+
+  useEffect(() => {
+    if (!layer) {
+      return;
+    }
+
     const updateSelectionBorder = () => {
       setSelectionUpdateKey((value) => value + 1);
     };
@@ -123,7 +181,7 @@ export const CanvasElements = observer(({ layer, elements }: CanvasElementsProps
   }, [selectedId]);
 
   useEffect(() => {
-    if (!layer || !selectedId) {
+    if (!layer || !selectedId || transformerRef.current) {
       selectionRectRef.current?.destroy();
       selectionRectRef.current = null;
       layer?.batchDraw();
@@ -175,6 +233,8 @@ export const CanvasElements = observer(({ layer, elements }: CanvasElementsProps
     return () => {
       selectionRectRef.current?.destroy();
       selectionRectRef.current = null;
+      transformerRef.current?.destroy();
+      transformerRef.current = null;
       nodeMap.forEach((node) => {
         node.destroy();
       });
