@@ -2,12 +2,13 @@ import Konva from "konva";
 import { observer } from "mobx-react-lite";
 import { useEffect, useRef, useState } from "react";
 import { createImageNode } from "../elements/createImageElement";
+import {
+  MAX_IMAGE_ELEMENT_SIZE,
+  MIN_IMAGE_ELEMENT_SIZE,
+} from "../constants/element";
 import { useStore } from "../store";
 import { ElementType } from "../store/workspaceStore";
 import type { CanvasElement } from "../store/workspaceStore";
-
-const MIN_TRANSFORM_SIZE = 20;
-const MAX_TRANSFORM_SIZE = 3000;
 
 export interface CanvasElementsProps {
   layer: Konva.Layer | null;
@@ -98,10 +99,10 @@ export const CanvasElements = observer(
       const transformer = new Konva.Transformer({
         boundBoxFunc: (oldBox, newBox) => {
           if (
-            newBox.width < MIN_TRANSFORM_SIZE ||
-            newBox.height < MIN_TRANSFORM_SIZE ||
-            newBox.width > MAX_TRANSFORM_SIZE ||
-            newBox.height > MAX_TRANSFORM_SIZE
+            newBox.width < MIN_IMAGE_ELEMENT_SIZE ||
+            newBox.height < MIN_IMAGE_ELEMENT_SIZE ||
+            newBox.width > MAX_IMAGE_ELEMENT_SIZE ||
+            newBox.height > MAX_IMAGE_ELEMENT_SIZE
           ) {
             return oldBox;
           }

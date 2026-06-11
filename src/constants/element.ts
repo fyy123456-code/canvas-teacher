@@ -1,0 +1,2 @@
+export const MAX_IMAGE_ELEMENT_SIZE = 8166;
+export const MIN_IMAGE_ELEMENT_SIZE = 6;
