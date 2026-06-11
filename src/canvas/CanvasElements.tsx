@@ -101,6 +101,28 @@ export const CanvasElements = observer(({ layer, elements }: CanvasElementsProps
   }, [layer]);
 
   useEffect(() => {
+    if (!selectedId) {
+      return;
+    }
+
+    const selectedNode = nodeMapRef.current.get(selectedId);
+    if (!selectedNode) {
+      return;
+    }
+
+    const updateSelectionBorder = () => {
+      setSelectionUpdateKey((value) => value + 1);
+    };
+    const nodeEvents = 'xChange.selectionBorder yChange.selectionBorder';
+
+    selectedNode.on(nodeEvents, updateSelectionBorder);
+
+    return () => {
+      selectedNode.off(nodeEvents);
+    };
+  }, [selectedId]);
+
+  useEffect(() => {
     if (!layer || !selectedId) {
       selectionRectRef.current?.destroy();
       selectionRectRef.current = null;
