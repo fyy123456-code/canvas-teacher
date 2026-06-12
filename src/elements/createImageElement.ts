@@ -10,7 +10,7 @@ export interface CreateImageNodeOptions {
   height?: number;
   zIndex?: number;
   draggable?: boolean;
-  onSelect?: () => void;
+  onSelect?: (event: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => void;
   onDragEnd?: (node: Konva.Image) => void;
 }
 
@@ -45,9 +45,9 @@ export function createImageNode({
   imageNode.on('dragend', () => {
     onDragEnd?.(imageNode);
   });
-  imageNode.on('click tap', (event) => {
+  imageNode.on('click tap', (event: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
     event.cancelBubble = true;
-    onSelect?.();
+    onSelect?.(event);
   });
 
   layer.add(imageNode);

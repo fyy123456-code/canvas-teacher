@@ -15,16 +15,21 @@ export interface CanvasElementsProps {
   elements: CanvasElement[];
 }
 
+function isKonvaNode(node: Konva.Node | undefined): node is Konva.Node {
+  return Boolean(node);
+}
+
 export const CanvasElements = observer(
   ({ layer, elements }: CanvasElementsProps) => {
     const store = useStore();
     const nodeMapRef = useRef<Map<string, Konva.Node>>(new Map());
-    const selectionRectRef = useRef<Konva.Rect | null>(null);
+    const selectionBordersRef = useRef<Map<string, Konva.Rect>>(new Map());
     const transformerRef = useRef<Konva.Transformer | null>(null);
     const [selectionUpdateKey, setSelectionUpdateKey] = useState(0);
     const elementSnapshot = elements.slice();
     const isViewportDragMode = store.editMode === "viewport-drag";
-    const selectedId = store.selectedIds[0] ?? null;
+    const selectedIds = store.selectedIds.slice();
+    const selectedIdsKey = selectedIds.join("|");
 
     useEffect(() => {
       if (!layer) {
@@ -59,12 +64,18 @@ export const CanvasElements = observer(
             height: element.height,
             zIndex: element.zIndex,
             draggable: !isViewportDragMode,
-            onSelect: () => {
+            onSelect: (event) => {
               if (store.editMode !== "select") {
                 return;
               }
 
-              store.selectElement(element.id);
+              const isMultiSelect =
+                event.evt.shiftKey || event.evt.metaKey || event.evt.ctrlKey;
+              if (!isMultiSelect && store.selectedIds.includes(element.id)) {
+                return;
+              }
+
+              store.selectElement(element.id, isMultiSelect);
             },
             onDragEnd: (node) => {
               store.updateElement(element.id, {
@@ -131,36 +142,41 @@ export const CanvasElements = observer(
         event.cancelBubble = true;
       });
       transformer.on("transformend", () => {
-        const [node] = transformer.nodes();
-        if (!node) {
+        const nodes = transformer.nodes();
+        if (nodes.length === 0) {
           return;
         }
 
-        const elementId = node.name();
-        if (!elementId) {
-          return;
-        }
+        nodes.forEach((node) => {
+          if (!(node instanceof Konva.Image)) {
+            return;
+          }
 
-        const nextWidth = node.width() * node.scaleX();
-        const nextHeight = node.height() * node.scaleY();
-        const nextX = node.x();
-        const nextY = node.y();
+          const elementId = node.name();
+          if (!elementId) {
+            return;
+          }
 
-        node.setAttrs({
-          x: nextX,
-          y: nextY,
-          width: nextWidth,
-          height: nextHeight,
-          scaleX: 1,
-          scaleY: 1,
+          const nextWidth = node.width() * node.scaleX();
+          const nextHeight = node.height() * node.scaleY();
+          const nextX = node.x();
+          const nextY = node.y();
+
+          node.x(nextX);
+          node.y(nextY);
+          node.width(nextWidth);
+          node.height(nextHeight);
+          node.scaleX(1);
+          node.scaleY(1);
+
+          store.updateElement(elementId, {
+            x: nextX,
+            y: nextY,
+            width: nextWidth,
+            height: nextHeight,
+          });
         });
 
-        store.updateElement(elementId, {
-          x: nextX,
-          y: nextY,
-          width: nextWidth,
-          height: nextHeight,
-        });
         transformer.forceUpdate();
         setSelectionUpdateKey((value) => value + 1);
         layer.batchDraw();
@@ -182,23 +198,25 @@ export const CanvasElements = observer(
         return;
       }
 
-      if (!selectedId || isViewportDragMode) {
+      if (selectedIds.length === 0 || isViewportDragMode) {
         transformer.nodes([]);
         layer.batchDraw();
         return;
       }
 
-      const selectedNode = nodeMapRef.current.get(selectedId);
-      if (!selectedNode) {
+      const selectedNodes = selectedIds
+        .map((id) => nodeMapRef.current.get(id))
+        .filter(isKonvaNode);
+      if (selectedNodes.length === 0) {
         transformer.nodes([]);
         layer.batchDraw();
         return;
       }
 
-      transformer.nodes([selectedNode]);
+      transformer.nodes(selectedNodes);
       transformer.moveToTop();
       layer.batchDraw();
-    }, [isViewportDragMode, layer, selectedId]);
+    }, [isViewportDragMode, layer, selectedIdsKey]);
 
     useEffect(() => {
       if (!layer) {
@@ -219,12 +237,14 @@ export const CanvasElements = observer(
     }, [layer]);
 
     useEffect(() => {
-      if (!selectedId) {
+      if (selectedIds.length === 0) {
         return;
       }
 
-      const selectedNode = nodeMapRef.current.get(selectedId);
-      if (!selectedNode) {
+      const selectedNodes = selectedIds
+        .map((id) => nodeMapRef.current.get(id))
+        .filter(isKonvaNode);
+      if (selectedNodes.length === 0) {
         return;
       }
 
@@ -233,68 +253,82 @@ export const CanvasElements = observer(
       };
       const nodeEvents = "xChange.selectionBorder yChange.selectionBorder";
 
-      selectedNode.on(nodeEvents, updateSelectionBorder);
+      selectedNodes.forEach((node) => {
+        node.on(nodeEvents, updateSelectionBorder);
+      });
 
       return () => {
-        selectedNode.off(nodeEvents);
+        selectedNodes.forEach((node) => {
+          node.off(nodeEvents);
+        });
       };
-    }, [selectedId]);
+    }, [selectedIdsKey]);
 
     useEffect(() => {
-      if (!layer || !selectedId || transformerRef.current) {
-        selectionRectRef.current?.destroy();
-        selectionRectRef.current = null;
+      const selectionBorders = selectionBordersRef.current;
+      selectionBorders.forEach((rect) => {
+        rect.destroy();
+      });
+      selectionBorders.clear();
+
+      if (!layer || selectedIds.length <= 1 || isViewportDragMode) {
         layer?.batchDraw();
         return;
       }
 
-      const selectedNode = nodeMapRef.current.get(selectedId);
-      if (!selectedNode) {
-        selectionRectRef.current?.destroy();
-        selectionRectRef.current = null;
-        layer.batchDraw();
-        return;
-      }
+      selectedIds.forEach((id) => {
+        const selectedNode = nodeMapRef.current.get(id);
+        if (!selectedNode) {
+          return;
+        }
 
-      const rect =
-        selectionRectRef.current ??
-        new Konva.Rect({
-          name: "selection-border",
-          listening: false,
-          stroke: "#2563eb",
-          strokeWidth: 2 / store.viewport.scale,
-          dash: [8 / store.viewport.scale, 4 / store.viewport.scale],
+        const selectedRect = selectedNode.getClientRect({
+          relativeTo: layer,
+          skipStroke: true,
+          skipShadow: true,
         });
-      const selectedRect = selectedNode.getClientRect({
-        relativeTo: layer,
-        skipStroke: true,
-        skipShadow: true,
-      });
+        const rect = new Konva.Rect({
+          name: `selection-border-${id}`,
+          listening: false,
+          stroke: "#4C90FF",
+          x: selectedRect.x,
+          y: selectedRect.y,
+          width: selectedRect.width,
+          height: selectedRect.height,
+          strokeWidth: 2 / store.viewport.scale,
+        });
 
-      rect.setAttrs({
-        x: selectedRect.x,
-        y: selectedRect.y,
-        width: selectedRect.width,
-        height: selectedRect.height,
-        strokeWidth: 2 / store.viewport.scale,
-        dash: [8 / store.viewport.scale, 4 / store.viewport.scale],
-      });
-
-      if (!selectionRectRef.current) {
-        selectionRectRef.current = rect;
         layer.add(rect);
-      }
+        selectionBorders.set(id, rect);
+      });
 
-      rect.moveToTop();
+      transformerRef.current?.moveToTop();
       layer.batchDraw();
-    }, [layer, selectedId, selectionUpdateKey, store.viewport.scale]);
+
+      return () => {
+        selectionBorders.forEach((rect) => {
+          rect.destroy();
+        });
+        selectionBorders.clear();
+        layer.batchDraw();
+      };
+    }, [
+      isViewportDragMode,
+      layer,
+      selectedIdsKey,
+      selectionUpdateKey,
+      store.viewport.scale,
+    ]);
 
     useEffect(() => {
       const nodeMap = nodeMapRef.current;
+      const selectionBorders = selectionBordersRef.current;
 
       return () => {
-        selectionRectRef.current?.destroy();
-        selectionRectRef.current = null;
+        selectionBorders.forEach((rect) => {
+          rect.destroy();
+        });
+        selectionBorders.clear();
         transformerRef.current?.destroy();
         transformerRef.current = null;
         nodeMap.forEach((node) => {

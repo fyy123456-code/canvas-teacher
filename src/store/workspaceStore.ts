@@ -97,8 +97,18 @@ export class WorkSpaceStore {
     this.selectedIds = ids;
   }
 
-  selectElement(id: string) {
-    this.setSelectedIds([id]);
+  selectElement(id: string, multi = false) {
+    if (!multi) {
+      this.setSelectedIds([id]);
+      return;
+    }
+
+    if (this.selectedIds.includes(id)) {
+      this.setSelectedIds(this.selectedIds.filter((selectedId) => selectedId !== id));
+      return;
+    }
+
+    this.setSelectedIds([...this.selectedIds, id]);
   }
 
   clearSelection() {
