@@ -34,26 +34,28 @@ export const Toolbar = observer(() => {
   };
 
   const handleImageFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) {
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) {
       return;
     }
 
-    const src = URL.createObjectURL(file);
-    const { width, height } = await getImageSize(src);
-    const id = store.generateId();
+    for (const [index, file] of files.entries()) {
+      const src = URL.createObjectURL(file);
+      const { width, height } = await getImageSize(src);
+      const id = store.generateId();
 
-    store.addElement({
-      id,
-      type: ElementType.IMAGE,
-      status: ElementStatus.LOADED,
-      file_name: file.name,
-      src,
-      x: 80,
-      y: 80,
-      width,
-      height,
-    });
+      store.addElement({
+        id,
+        type: ElementType.IMAGE,
+        status: ElementStatus.LOADED,
+        file_name: file.name,
+        src,
+        x: 80 + index * 24,
+        y: 80 + index * 24,
+        width,
+        height,
+      });
+    }
 
     event.target.value = '';
   };
@@ -77,6 +79,7 @@ export const Toolbar = observer(() => {
         ref={imageInputRef}
         type="file"
         accept="image/*"
+        multiple
         className="toolbar-file-input"
         onChange={handleImageFileChange}
       />
