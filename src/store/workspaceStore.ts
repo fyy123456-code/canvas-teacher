@@ -1,5 +1,6 @@
 import Konva from 'konva';
 import { makeAutoObservable, observable } from 'mobx';
+import { calculateElementsPositions } from '../utils/elementPositionStrategy';
 import { Viewport } from '../viewport';
 
 export const ElementType = {
@@ -142,10 +143,19 @@ export class WorkSpaceStore {
   }
 
   addElement(element: CanvasElement) {
-    this.elements.push({
+    return this.addElements([element])[0];
+  }
+
+  addElements(elements: CanvasElement[]) {
+    const positionedElements = calculateElementsPositions(elements, this.elements);
+    const startIndex = this.elements.length;
+    const nextElements = positionedElements.map((element, index) => ({
       ...element,
-      zIndex: element.zIndex ?? this.elements.length + 2,
-    });
+      zIndex: element.zIndex ?? startIndex + index + 2,
+    }));
+
+    this.elements.push(...nextElements);
+    return nextElements;
   }
 
   updateElement(id: string, patch: Partial<CanvasElement>) {

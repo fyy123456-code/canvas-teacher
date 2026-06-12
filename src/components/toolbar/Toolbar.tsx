@@ -39,23 +39,25 @@ export const Toolbar = observer(() => {
       return;
     }
 
-    for (const [index, file] of files.entries()) {
-      const src = URL.createObjectURL(file);
-      const { width, height } = await getImageSize(src);
-      const id = store.generateId();
+    const elements = await Promise.all(
+      files.map(async (file) => {
+        const src = URL.createObjectURL(file);
+        const { width, height } = await getImageSize(src);
+        const id = store.generateId();
 
-      store.addElement({
-        id,
-        type: ElementType.IMAGE,
-        status: ElementStatus.LOADED,
-        file_name: file.name,
-        src,
-        x: 80 + index * 24,
-        y: 80 + index * 24,
-        width,
-        height,
-      });
-    }
+        return {
+          id,
+          type: ElementType.IMAGE,
+          status: ElementStatus.LOADED,
+          file_name: file.name,
+          src,
+          width,
+          height,
+        };
+      }),
+    );
+
+    store.addElements(elements);
 
     event.target.value = '';
   };
