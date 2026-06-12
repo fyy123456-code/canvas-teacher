@@ -1,17 +1,27 @@
 import Konva from 'konva';
 import { useEffect, useRef } from 'react';
 import type { Viewport } from '../viewport';
+import type { CanvasElement } from '../store/workspaceStore';
 
 export interface UseSelectBoxOptions {
   stage: Konva.Stage | null;
   interactionLayer: Konva.Layer | null;
   viewport: Viewport;
+  elements: CanvasElement[];
   enabled: boolean;
+  onSelectIds: (ids: string[]) => void;
 }
 
 interface Point {
   x: number;
   y: number;
+}
+
+interface Rect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
 
 function createSelectRect() {
@@ -39,7 +49,38 @@ function getRectFromPoints(start: Point, end: Point) {
   };
 }
 
-export function useSelectBox({ stage, interactionLayer, viewport, enabled }: UseSelectBoxOptions) {
+function haveRectIntersection(rectA: Rect, rectB: Rect) {
+  return (
+    rectA.x < rectB.x + rectB.width &&
+    rectA.x + rectA.width > rectB.x &&
+    rectA.y < rectB.y + rectB.height &&
+    rectA.y + rectA.height > rectB.y
+  );
+}
+
+function getElementRect(element: CanvasElement): Rect {
+  return {
+    x: element.x ?? 0,
+    y: element.y ?? 0,
+    width: element.width ?? 0,
+    height: element.height ?? 0,
+  };
+}
+
+function getSelectedIdsByRect(elements: CanvasElement[], selectRect: Rect) {
+  return elements
+    .filter((element) => haveRectIntersection(selectRect, getElementRect(element)))
+    .map((element) => element.id);
+}
+
+export function useSelectBox({
+  stage,
+  interactionLayer,
+  viewport,
+  elements,
+  enabled,
+  onSelectIds,
+}: UseSelectBoxOptions) {
   const selectRectRef = useRef<Konva.Rect | null>(null);
   const startPointRef = useRef<Point | null>(null);
   const screenRectRef = useRef<ReturnType<typeof getRectFromPoints> | null>(null);
@@ -127,10 +168,8 @@ export function useSelectBox({ stage, interactionLayer, viewport, enabled }: Use
 
       if (screenRect) {
         const worldRect = viewport.screenRectToWorldRect(screenRect);
-        console.log('[select-box]', {
-          screenRect,
-          worldRect,
-        });
+        const selectedIds = getSelectedIdsByRect(elements, worldRect);
+        onSelectIds(selectedIds);
       }
     };
 
@@ -143,5 +182,5 @@ export function useSelectBox({ stage, interactionLayer, viewport, enabled }: Use
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [enabled, interactionLayer, stage, viewport]);
+  }, [elements, enabled, interactionLayer, onSelectIds, stage, viewport]);
 }

@@ -136,7 +136,11 @@ export const InfiniteCanvas = observer(function InfiniteCanvas({
     stage,
     interactionLayer,
     viewport: store.viewport,
+    elements,
     enabled: store.editMode === 'select',
+    onSelectIds: (ids) => {
+      store.setSelectedIds(ids);
+    },
   });
 
   useEffect(() => {
