@@ -7,6 +7,7 @@ import { CANVAS_BACKGROUND_COLOR } from './canvasConfig';
 import { CanvasElements } from './CanvasElements';
 import { createGridGroup } from './createGrid';
 import type { CanvasSize } from './types';
+import { useSelectBox } from './useSelectBox';
 
 export interface InfiniteCanvasProps {
   width?: number;
@@ -25,6 +26,8 @@ export const InfiniteCanvas = observer(function InfiniteCanvas({
   const layerRef = useRef<Konva.Layer | null>(null);
   const interactionLayerRef = useRef<Konva.Layer | null>(null);
   const [layer, setLayer] = useState<Konva.Layer | null>(null);
+  const [stage, setStage] = useState<Konva.Stage | null>(null);
+  const [interactionLayer, setInteractionLayer] = useState<Konva.Layer | null>(null);
 
   const stageSize = useMemo<CanvasSize>(() => ({ width, height }), [width, height]);
   const stageSizeRef = useRef<CanvasSize>(stageSize);
@@ -106,7 +109,9 @@ export const InfiniteCanvas = observer(function InfiniteCanvas({
       store.clearSelection();
     };
     stage.on('click tap', handleStageClick);
+    setStage(stage);
     setLayer(layer);
+    setInteractionLayer(interactionLayer);
 
     layer.draw();
     interactionLayer.draw();
@@ -121,9 +126,17 @@ export const InfiniteCanvas = observer(function InfiniteCanvas({
       store.setStage(null);
       store.setLayer(null);
       store.setRefreshGrid(null);
+      setStage(null);
       setLayer(null);
+      setInteractionLayer(null);
     };
   }, [store]);
+
+  useSelectBox({
+    stage,
+    interactionLayer,
+    enabled: store.editMode === 'select',
+  });
 
   useEffect(() => {
     const stage = stageRef.current;
