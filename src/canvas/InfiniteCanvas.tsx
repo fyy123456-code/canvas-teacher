@@ -135,6 +135,7 @@ export const InfiniteCanvas = observer(function InfiniteCanvas({
   useSelectBox({
     stage,
     interactionLayer,
+    viewport: store.viewport,
     enabled: store.editMode === 'select',
   });
 

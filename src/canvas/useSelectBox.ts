@@ -1,9 +1,11 @@
 import Konva from 'konva';
 import { useEffect, useRef } from 'react';
+import type { Viewport } from '../viewport';
 
 export interface UseSelectBoxOptions {
   stage: Konva.Stage | null;
   interactionLayer: Konva.Layer | null;
+  viewport: Viewport;
   enabled: boolean;
 }
 
@@ -37,9 +39,10 @@ function getRectFromPoints(start: Point, end: Point) {
   };
 }
 
-export function useSelectBox({ stage, interactionLayer, enabled }: UseSelectBoxOptions) {
+export function useSelectBox({ stage, interactionLayer, viewport, enabled }: UseSelectBoxOptions) {
   const selectRectRef = useRef<Konva.Rect | null>(null);
   const startPointRef = useRef<Point | null>(null);
+  const screenRectRef = useRef<ReturnType<typeof getRectFromPoints> | null>(null);
   const isSelectingRef = useRef(false);
 
   useEffect(() => {
@@ -100,7 +103,9 @@ export function useSelectBox({ stage, interactionLayer, enabled }: UseSelectBoxO
         return;
       }
 
-      selectRect.setAttrs(getRectFromPoints(startPoint, pointer));
+      const screenRect = getRectFromPoints(startPoint, pointer);
+      screenRectRef.current = screenRect;
+      selectRect.setAttrs(screenRect);
       interactionLayer.batchDraw();
     };
 
@@ -110,12 +115,22 @@ export function useSelectBox({ stage, interactionLayer, enabled }: UseSelectBoxO
       }
 
       const selectRect = selectRectRef.current;
+      const screenRect = screenRectRef.current;
       isSelectingRef.current = false;
       startPointRef.current = null;
+      screenRectRef.current = null;
 
       if (selectRect) {
         selectRect.visible(false);
         interactionLayer.batchDraw();
+      }
+
+      if (screenRect) {
+        const worldRect = viewport.screenRectToWorldRect(screenRect);
+        console.log('[select-box]', {
+          screenRect,
+          worldRect,
+        });
       }
     };
 
@@ -128,5 +143,5 @@ export function useSelectBox({ stage, interactionLayer, enabled }: UseSelectBoxO
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [enabled, interactionLayer, stage]);
+  }, [enabled, interactionLayer, stage, viewport]);
 }
